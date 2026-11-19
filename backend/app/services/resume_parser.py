@@ -227,6 +227,28 @@ class ResumeParser:
             })
 
         calculated_years = round(total_months / 12.0, 1) if total_months > 0 else 0.0
+        
+        # Fallback: check for explicit phrases like "6 years of experience", "5+ yrs experience", "Experience: 6 years"
+        if calculated_years == 0.0:
+            exp_text_patterns = [
+                r"(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)(?:\s+of)?\s+experience",
+                r"experience\s*[:\-]?\s*(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)"
+            ]
+            for pat in exp_text_patterns:
+                m = re.search(pat, text, re.IGNORECASE)
+                if m:
+                    try:
+                        val = float(m.group(1))
+                        calculated_years = val
+                        experience.append({
+                            "duration": f"{val} years stated",
+                            "years": val,
+                            "context": m.group(0)
+                        })
+                        break
+                    except ValueError:
+                        pass
+
         return experience, calculated_years
 
     @classmethod

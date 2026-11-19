@@ -148,3 +148,14 @@ def extract_skills_from_text(text: str) -> Tuple[List[str], Dict[str, List[str]]
             categorized[category] = sorted(list(matched_in_cat))
 
     return sorted(list(found_canonical)), categorized
+
+class SkillExtractor:
+    @staticmethod
+    def extract_skills(text: str) -> List[str]:
+        skills, _ = extract_skills_from_text(text)
+        return skills
+
+    @staticmethod
+    def extract_skills_categorized(text: str) -> Tuple[List[str], Dict[str, List[str]]]:
+        return extract_skills_from_text(text)
+

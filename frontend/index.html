@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CareerRadar AI - Intelligent Job Discovery & Career Recommendation</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .glass { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); }
+    .gradient-hero { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%); }
+    .badge-score-high { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+    .badge-score-med { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+    .badge-score-low { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+  <!-- TOP NAVBAR -->
+  <header class="sticky top-0 z-50 glass border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('radar')">
+        <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+          <i data-lucide="radar" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <span class="text-xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">CareerRadar AI</span>
+          <span class="hidden sm:inline-block ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">Production</span>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs (Authenticated Only) -->
+      <nav id="navLinks" class="hidden md:flex items-center space-x-1">
+        <button onclick="switchTab('radar')" id="tabBtn-radar" class="tab-btn px-3 py-2 rounded-lg text-sm font-medium transition text-indigo-600 bg-indigo-50 flex items-center space-x-1.5">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+          <span>AI Radar</span>
+        </button>
+        <button onclick="switchTab('jobs')" id="tabBtn-jobs" class="tab-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center space-x-1.5">
+          <i data-lucide="briefcase" class="w-4 h-4"></i>
+          <span>Jobs Directory</span>
+        </button>
+        <button onclick="switchTab('resumes')" id="tabBtn-resumes" class="tab-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center space-x-1.5">
+          <i data-lucide="file-text" class="w-4 h-4"></i>
+          <span>Resumes Portfolio</span>
+        </button>
+        <button onclick="switchTab('tracker')" id="tabBtn-tracker" class="tab-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center space-x-1.5">
+          <i data-lucide="kanban" class="w-4 h-4"></i>
+          <span>Applications Tracker</span>
+        </button>
+        <button onclick="switchTab('profile')" id="tabBtn-profile" class="tab-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center space-x-1.5">
+          <i data-lucide="user" class="w-4 h-4"></i>
+          <span>Candidate Profile</span>
+        </button>
+      </nav>
+
+      <!-- Auth Action / User Profile -->
+      <div id="authHeaderZone" class="flex items-center space-x-3">
+        <!-- Injected via JavaScript based on auth state -->
+      </div>
+    </div>
+  </header>
+
+  <!-- NOTIFICATION TOAST -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+  <!-- MAIN APP CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- AUTHENTICATION VIEW (When Logged Out) -->
+    <div id="view-auth" class="hidden max-w-md mx-auto my-12 bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-600 mx-auto flex items-center justify-center mb-3">
+          <i data-lucide="shield-check" class="w-6 h-6"></i>
+        </div>
+        <h2 id="authTitle" class="text-2xl font-bold text-slate-900">Welcome to CareerRadar AI</h2>
+        <p id="authSubtitle" class="text-sm text-slate-500 mt-1">Sign in to unlock personalized AI career recommendations</p>
+      </div>
+
+      <form id="authForm" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+        <div id="fullNameGroup" class="hidden">
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Full Name</label>
+          <input type="text" id="authFullName" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="e.g. Alex Rivera">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Email Address</label>
+          <input type="email" id="authEmail" required class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="candidate@example.com">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Password</label>
+          <input type="password" id="authPassword" required class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="••••••••">
+        </div>
+        <button type="submit" id="authSubmitBtn" class="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm transition shadow-md shadow-indigo-500/20">
+          Sign In
+        </button>
+      </form>
+
+      <div class="mt-4 pt-4 border-t border-slate-100 flex flex-col space-y-2">
+        <button type="button" onclick="toggleAuthMode()" id="authToggleBtn" class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold text-center">
+          Don't have an account? Create candidate profile
+        </button>
+      </div>
+    </div>
+
+    <!-- TAB 1: AI CAREER RADAR / RECOMMENDATIONS -->
+    <div id="view-radar" class="space-y-6">
+      <!-- Hero Banner -->
+      <div class="gradient-hero rounded-3xl p-8 text-white relative overflow-hidden shadow-xl">
+        <div class="max-w-2xl relative z-10">
+          <span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-indigo-500/30 text-indigo-200 text-xs font-medium border border-indigo-400/30 mb-4">
+            <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
+            <span>Deterministic Eligibility & Hybrid Neural Matcher</span>
+          </span>
+          <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Personalized Career Radar</h1>
+          <p class="mt-2 text-indigo-100 text-sm sm:text-base leading-relaxed">
+            Continuously compares your multi-category resumes against verified employer roles, selects the optimal resume, and computes explainable compatibility rationales.
+          </p>
+          <div class="mt-6 flex flex-wrap gap-3">
+            <button onclick="refreshRecommendations()" class="px-4 py-2 rounded-xl bg-white text-indigo-900 font-semibold text-sm hover:bg-indigo-50 transition flex items-center space-x-2 shadow-lg">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+              <span>Refresh Radar</span>
+            </button>
+            <button onclick="syncVerifiedEmployerSeeds()" class="px-4 py-2 rounded-xl bg-indigo-500/40 hover:bg-indigo-500/60 text-white font-medium text-sm transition border border-indigo-400/40 flex items-center space-x-2">
+              <i data-lucide="database" class="w-4 h-4"></i>
+              <span>Sync Employer ATS Feeds</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recommendations List -->
+      <div class="flex items-center justify-between pt-2">
+        <div>
+          <h2 class="text-xl font-bold text-slate-900">Recommended Roles</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Ranked by composite match score, skill overlap, and resume category fitness</p>
+        </div>
+        <div id="recCountBadge" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-200 text-slate-700">0 Matches</div>
+      </div>
+
+      <div id="recommendationsList" class="grid grid-cols-1 gap-5">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+
+    <!-- TAB 2: JOBS DIRECTORY -->
+    <div id="view-jobs" class="hidden space-y-6">
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-slate-900">Verified Job Opportunities</h2>
+            <p class="text-xs text-slate-500 mt-1">Live listings extracted from verified ATS boards with canonical URL deduplication</p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button onclick="openAddJobModal()" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition flex items-center space-x-1.5 shadow-sm">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>Add Verified Job</span>
+            </button>
+            <button onclick="triggerFreshnessCheck()" class="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-medium transition flex items-center space-x-1.5" title="Verify HTTP Link Freshness">
+              <i data-lucide="check-check" class="w-4 h-4 text-emerald-600"></i>
+              <span>Check Freshness</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+          <div>
+            <input type="text" id="jobSearchQuery" oninput="debounceFetchJobs()" placeholder="Search title, company, skills..." class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <div>
+            <select id="jobFilterWorkMode" onchange="fetchJobsList()" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="">All Work Modes</option>
+              <option value="remote">Remote Only</option>
+              <option value="hybrid">Hybrid</option>
+              <option value="onsite">On-site</option>
+            </select>
+          </div>
+          <div>
+            <input type="text" id="jobFilterLocation" oninput="debounceFetchJobs()" placeholder="Filter location (e.g. SF, NY)..." class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <div>
+            <select id="jobFilterExp" onchange="fetchJobsList()" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="">Any Experience Level</option>
+              <option value="2">0 - 2 Years</option>
+              <option value="5">Up to 5 Years</option>
+              <option value="8">Up to 8 Years</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="jobsListContainer" class="grid grid-cols-1 gap-4">
+        <!-- Injected via JS -->
+      </div>
+    </div>
+
+    <!-- TAB 3: RESUMES PORTFOLIO -->
+    <div id="view-resumes" class="hidden space-y-6">
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-slate-900">Multi-Resume Portfolio</h2>
+            <p class="text-xs text-slate-500 mt-1">Upload role-tailored resumes (e.g. SDE, AI/ML, DevOps). Our parser extracts skills, timelines, and degrees.</p>
+          </div>
+          <button onclick="document.getElementById('resumeFileInput').click()" class="px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition flex items-center space-x-2 shadow-sm">
+            <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+            <span>Upload New Resume</span>
+          </button>
+        </div>
+
+        <!-- Hidden upload input -->
+        <input type="file" id="resumeFileInput" onchange="handleResumeFileSelected(event)" accept=".pdf,.docx,.txt" class="hidden">
+      </div>
+
+      <div id="resumesListContainer" class="grid grid-cols-1 gap-5">
+        <!-- Injected via JS -->
+      </div>
+    </div>
+
+    <!-- TAB 4: APPLICATION TRACKER (KANBAN) -->
+    <div id="view-tracker" class="hidden space-y-6">
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-slate-900">Application Pipeline</h2>
+            <p class="text-xs text-slate-500 mt-1">Manage your active applications from discovery to offer stage</p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button onclick="fetchApplications()" class="px-3.5 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-medium transition flex items-center space-x-1.5">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+              <span>Refresh Pipeline</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kanban Columns -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <!-- Saved Column -->
+        <div class="bg-slate-100/70 rounded-2xl p-4 border border-slate-200 flex flex-col">
+          <div class="flex items-center justify-between mb-3 px-1">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center space-x-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+              <span>Saved</span>
+            </span>
+            <span id="colCount-saved" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-white text-slate-700">0</span>
+          </div>
+          <div id="colList-saved" class="flex-1 space-y-3 min-h-[250px]"></div>
+        </div>
+
+        <!-- Applied Column -->
+        <div class="bg-slate-100/70 rounded-2xl p-4 border border-slate-200 flex flex-col">
+          <div class="flex items-center justify-between mb-3 px-1">
+            <span class="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center space-x-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+              <span>Applied</span>
+            </span>
+            <span id="colCount-applied" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-white text-indigo-700">0</span>
+          </div>
+          <div id="colList-applied" class="flex-1 space-y-3 min-h-[250px]"></div>
+        </div>
+
+        <!-- Interviewing Column -->
+        <div class="bg-slate-100/70 rounded-2xl p-4 border border-slate-200 flex flex-col">
+          <div class="flex items-center justify-between mb-3 px-1">
+            <span class="text-xs font-bold uppercase tracking-wider text-amber-700 flex items-center space-x-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+              <span>Interview</span>
+            </span>
+            <span id="colCount-interview" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-white text-amber-700">0</span>
+          </div>
+          <div id="colList-interview" class="flex-1 space-y-3 min-h-[250px]"></div>
+        </div>
+
+        <!-- Offer Column -->
+        <div class="bg-slate-100/70 rounded-2xl p-4 border border-slate-200 flex flex-col">
+          <div class="flex items-center justify-between mb-3 px-1">
+            <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 flex items-center space-x-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <span>Offer</span>
+            </span>
+            <span id="colCount-offer" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-white text-emerald-700">0</span>
+          </div>
+          <div id="colList-offer" class="flex-1 space-y-3 min-h-[250px]"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: CANDIDATE PROFILE -->
+    <div id="view-profile" class="hidden max-w-3xl mx-auto space-y-6">
+      <div class="bg-white rounded-2xl p-8 shadow-sm border border-slate-200">
+        <div class="border-b border-slate-100 pb-4 mb-6">
+          <h2 class="text-2xl font-bold text-slate-900">Candidate Career Intelligence</h2>
+          <p class="text-xs text-slate-500 mt-1">Configure your career parameters and preferences for precise AI matching</p>
+        </div>
+
+        <form id="profileForm" onsubmit="handleProfileSave(event)" class="space-y-5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Full Name</label>
+              <input type="text" id="profFullName" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Total Years of Experience</label>
+              <input type="number" step="0.5" id="profYearsExp" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Professional Headline</label>
+            <input type="text" id="profHeadline" placeholder="e.g. Staff AI Platform Engineer & Distributed Systems Architect" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Target Roles (Comma-separated)</label>
+            <input type="text" id="profRoles" placeholder="Staff AI Engineer, Principal Backend Architect, MLOps Lead" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500">
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Minimum Base Salary ($ USD)</label>
+              <input type="number" id="profMinSalary" placeholder="180000" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Expected Salary ($ USD)</label>
+              <input type="number" id="profExpectedSalary" placeholder="260000" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Degree / Highest Education</label>
+              <input type="text" id="profDegree" placeholder="Master of Science" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">University / Institute</label>
+              <input type="text" id="profUniversity" placeholder="University of Washington" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Target Locations (Comma-separated)</label>
+            <input type="text" id="profLocations" placeholder="San Francisco, CA, Seattle, WA, Remote" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Work Mode Preferences</label>
+            <div class="flex items-center space-x-6 text-sm">
+              <label class="flex items-center space-x-2 cursor-pointer">
+                <input type="checkbox" id="workModeRemote" value="remote" class="rounded text-indigo-600 focus:ring-indigo-500">
+                <span>Remote</span>
+              </label>
+              <label class="flex items-center space-x-2 cursor-pointer">
+                <input type="checkbox" id="workModeHybrid" value="hybrid" class="rounded text-indigo-600 focus:ring-indigo-500">
+                <span>Hybrid</span>
+              </label>
+              <label class="flex items-center space-x-2 cursor-pointer">
+                <input type="checkbox" id="workModeOnsite" value="onsite" class="rounded text-indigo-600 focus:ring-indigo-500">
+                <span>On-site</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-slate-100 flex justify-end">
+            <button type="submit" class="px-5 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm transition shadow-sm">
+              Save Profile Preferences
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL: DEEP DIVE RESUME COMPARISON -->
+  <div id="compareModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="text-lg font-bold text-slate-900">Multi-Resume Match Analysis</h3>
+        <button onclick="closeCompareModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div id="compareModalContent" class="mt-4 space-y-4">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: RESUME CORRECTIONS -->
+  <div id="correctionModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="text-lg font-bold text-slate-900">Edit Parsed Resume Data</h3>
+        <button onclick="closeCorrectionModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <form id="correctionForm" onsubmit="submitResumeCorrection(event)" class="mt-4 space-y-4">
+        <input type="hidden" id="corrResumeId">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Resume Category</label>
+          <input type="text" id="corrCategory" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Calculated Experience (Years)</label>
+          <input type="number" step="0.5" id="corrExpYears" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Extracted Skills (Comma-separated)</label>
+          <textarea id="corrSkills" rows="3" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500"></textarea>
+        </div>
+        <div class="pt-3 border-t border-slate-100 flex justify-end space-x-2">
+          <button type="button" onclick="closeCorrectionModal()" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium">Save Corrections</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD VERIFIED JOB -->
+  <div id="addJobModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="text-lg font-bold text-slate-900">Post / Ingest Verified Job</h3>
+        <button onclick="closeAddJobModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <form id="addJobForm" onsubmit="submitAddJob(event)" class="mt-4 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Company Name</label>
+          <input type="text" id="newJobCompany" required placeholder="e.g. Stripe, OpenAI" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Job Title</label>
+          <input type="text" id="newJobTitle" required placeholder="e.g. Senior Backend Engineer" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Work Mode</label>
+            <select id="newJobWorkMode" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500">
+              <option value="remote">Remote</option>
+              <option value="hybrid" selected>Hybrid</option>
+              <option value="onsite">On-site</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Min Experience (Yrs)</label>
+            <input type="number" step="0.5" id="newJobMinExp" value="3.0" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Location</label>
+          <input type="text" id="newJobLocation" required placeholder="e.g. San Francisco, CA or Remote" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Original Job URL</label>
+          <input type="url" id="newJobUrl" required placeholder="https://company.com/careers/job123" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Job Description</label>
+          <textarea id="newJobDesc" required rows="3" placeholder="Paste job requirements. Skills will be automatically extracted..." class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500"></textarea>
+        </div>
+        <div class="pt-3 border-t border-slate-100 flex justify-end space-x-2">
+          <button type="button" onclick="closeAddJobModal()" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium">Post Job</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- APPLICATION SCRIPTS -->
+  <script>
+    const API_BASE = window.location.origin + '/api/v1';
+    let token = localStorage.getItem('cr_token') || null;
+    let currentUser = null;
+    let currentTab = 'radar';
+    let isRegisterMode = false;
+    let jobsDebounceTimer = null;
+
+    // --- INITIALIZATION ---
+    window.addEventListener('DOMContentLoaded', async () => {
+      lucide.createIcons();
+      if (token) {
+        await verifyAndLoadUser();
+      } else {
+        showAuthView();
+      }
+    });
+
+    // --- TOAST NOTIFICATIONS ---
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const colors = {
+        success: 'bg-emerald-600 text-white',
+        error: 'bg-rose-600 text-white',
+        info: 'bg-slate-900 text-white'
+      };
+      toast.className = `px-4 py-3 rounded-xl shadow-lg text-sm font-medium flex items-center space-x-2 transition transform duration-300 ${colors[type] || colors.info}`;
+      toast.innerHTML = `<span>${message}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    // --- AUTHENTICATION ---
+    async function verifyAndLoadUser() {
+      try {
+        const res = await fetch(`${API_BASE}/auth/me`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          currentUser = await res.json();
+          renderAuthHeader();
+          hideAuthView();
+          switchTab(currentTab);
+        } else {
+          logout();
+        }
+      } catch (e) {
+        logout();
+      }
+    }
+
+    function renderAuthHeader() {
+      const zone = document.getElementById('authHeaderZone');
+      const navLinks = document.getElementById('navLinks');
+      if (currentUser) {
+        navLinks.classList.remove('hidden');
+        const roleBadge = currentUser.role === 'admin'
+          ? `<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-violet-100 text-violet-800 border border-violet-200">Admin</span>`
+          : `<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">Candidate</span>`;
+        zone.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <div class="hidden sm:flex flex-col text-right">
+              <span class="text-xs font-semibold text-slate-900">${currentUser.email}</span>
+              ${roleBadge}
+            </div>
+            <button onclick="logout()" class="p-2 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition" title="Sign Out">
+              <i data-lucide="log-out" class="w-4 h-4"></i>
+            </button>
+          </div>
+        `;
+      } else {
+        navLinks.classList.add('hidden');
+        zone.innerHTML = `
+          <button onclick="showAuthView()" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition shadow-sm">
+            Sign In
+          </button>
+        `;
+      }
+      lucide.createIcons();
+    }
+
+    // --- DEVELOPER CONSOLE HELPER (Hidden from UI, callable via devtools console) ---
+    window.__devLogin = function(role = 'admin') {
+      if (isRegisterMode) toggleAuthMode();
+      if (role === 'admin') {
+        document.getElementById('authEmail').value = 'admin@careerradar.ai';
+        document.getElementById('authPassword').value = 'AdminPassword2026!';
+      } else {
+        document.getElementById('authEmail').value = 'demo@careerradar.ai';
+        document.getElementById('authPassword').value = 'Password123!';
+      }
+      console.log(`[Developer Tool] Filled credentials for: ${role}`);
+    };
+
+    function showAuthView() {
+      document.querySelectorAll('main > div').forEach(d => d.classList.add('hidden'));
+      document.getElementById('view-auth').classList.remove('hidden');
+      renderAuthHeader();
+    }
+
+    function hideAuthView() {
+      document.getElementById('view-auth').classList.add('hidden');
+    }
+
+    function toggleAuthMode() {
+      isRegisterMode = !isRegisterMode;
+      document.getElementById('authTitle').innerText = isRegisterMode ? 'Create Candidate Account' : 'Welcome to CareerRadar AI';
+      document.getElementById('authSubtitle').innerText = isRegisterMode ? 'Get started with tailored AI job recommendations' : 'Sign in to unlock personalized AI career recommendations';
+      document.getElementById('fullNameGroup').classList.toggle('hidden', !isRegisterMode);
+      document.getElementById('authSubmitBtn').innerText = isRegisterMode ? 'Create Account' : 'Sign In';
+      document.getElementById('authToggleBtn').innerText = isRegisterMode ? 'Already have an account? Sign In' : "Don't have an account? Create candidate profile";
+    }
+
+    async function handleAuthSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      const fullName = document.getElementById('authFullName').value.trim();
+
+      const endpoint = isRegisterMode ? `${API_BASE}/auth/register` : `${API_BASE}/auth/login`;
+      const body = isRegisterMode ? { email, password, full_name: fullName || 'Candidate' } : { email, password };
+
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (res.ok) {
+          token = data.access_token;
+          localStorage.setItem('cr_token', token);
+          showToast(isRegisterMode ? 'Account registered successfully!' : 'Signed in successfully!', 'success');
+          await verifyAndLoadUser();
+        } else {
+          showToast(data.detail || 'Authentication failed', 'error');
+        }
+      } catch (err) {
+        showToast('Server communication error', 'error');
+      }
+    }
+
+    function logout() {
+      token = null;
+      currentUser = null;
+      localStorage.removeItem('cr_token');
+      showAuthView();
+      showToast('Signed out', 'info');
+    }
+
+    // --- TAB SWITCHING ---
+    function switchTab(tab) {
+      if (!token) {
+        showAuthView();
+        return;
+      }
+      currentTab = tab;
+      document.querySelectorAll('main > div').forEach(d => d.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.className = 'tab-btn px-3 py-2 rounded-lg text-sm font-medium transition text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center space-x-1.5';
+      });
+
+      const activeView = document.getElementById(`view-${tab}`);
+      const activeBtn = document.getElementById(`tabBtn-${tab}`);
+      if (activeView) activeView.classList.remove('hidden');
+      if (activeBtn) activeBtn.className = 'tab-btn px-3 py-2 rounded-lg text-sm font-medium transition text-indigo-600 bg-indigo-50 flex items-center space-x-1.5';
+
+      if (tab === 'radar') refreshRecommendations();
+      if (tab === 'jobs') fetchJobsList();
+      if (tab === 'resumes') fetchResumesList();
+      if (tab === 'tracker') fetchApplications();
+      if (tab === 'profile') fetchProfileData();
+
+      lucide.createIcons();
+    }
+
+    // --- TAB 1: RECOMMENDATIONS ENGINE ---
+    async function refreshRecommendations() {
+      const container = document.getElementById('recommendationsList');
+      container.innerHTML = `<div class="py-12 text-center text-slate-400"><i data-lucide="loader" class="w-8 h-8 animate-spin mx-auto mb-2 text-indigo-600"></i>Analyzing multi-resume alignment and employer jobs...</div>`;
+      lucide.createIcons();
+
+      try {
+        const res = await fetch(`${API_BASE}/recommendations?limit=15&min_score=30`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const recs = await res.json();
+        document.getElementById('recCountBadge').innerText = `${recs.length} Recommendations`;
+
+        if (!recs.length) {
+          container.innerHTML = `
+            <div class="bg-white rounded-2xl p-12 text-center border border-slate-200">
+              <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl mx-auto flex items-center justify-center mb-3">
+                <i data-lucide="file-question" class="w-6 h-6"></i>
+              </div>
+              <h3 class="text-base font-bold text-slate-900">No Recommendations Yet</h3>
+              <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">Upload at least one resume and sync employer jobs to generate personalized AI matches.</p>
+              <div class="mt-4 flex justify-center space-x-3">
+                <button onclick="switchTab('resumes')" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold">Upload Resume</button>
+                <button onclick="syncVerifiedEmployerSeeds()" class="px-4 py-2 border border-slate-300 rounded-lg text-xs font-semibold">Sync Sample Jobs</button>
+              </div>
+            </div>
+          `;
+          lucide.createIcons();
+          return;
+        }
+
+        container.innerHTML = recs.map(rec => {
+          const score = Math.round(rec.composite_score);
+          const scoreClass = score >= 75 ? 'badge-score-high' : (score >= 55 ? 'badge-score-med' : 'badge-score-low');
+          const job = rec.job;
+
+          return `
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:border-indigo-300 transition space-y-4">
+              <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                <div>
+                  <div class="flex items-center space-x-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">${job.company_name}</span>
+                    <span class="text-slate-300">•</span>
+                    <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 capitalize">${job.work_mode}</span>
+                    ${job.is_link_verified ? '<span class="text-[11px] font-medium text-emerald-600 flex items-center"><i data-lucide="check" class="w-3 h-3 mr-0.5"></i>Verified Link</span>' : ''}
+                  </div>
+                  <h3 class="text-lg font-bold text-slate-900 mt-1">${job.title}</h3>
+                  <div class="flex items-center space-x-3 text-xs text-slate-500 mt-1">
+                    <span><i data-lucide="map-pin" class="w-3.5 h-3.5 inline mr-1"></i>${job.location}</span>
+                    ${job.min_salary ? `<span><i data-lucide="dollar-sign" class="w-3.5 h-3.5 inline mr-0.5"></i>$${(job.min_salary/1000).toFixed(0)}k - $${(job.max_salary/1000).toFixed(0)}k</span>` : ''}
+                    <span><i data-lucide="briefcase" class="w-3.5 h-3.5 inline mr-1"></i>${job.min_experience_years}+ yrs exp</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center space-x-3">
+                  <div class="text-right">
+                    <span class="inline-block px-3 py-1 rounded-full text-sm font-extrabold ${scoreClass}">${score}% Match</span>
+                    <div class="text-[10px] text-slate-500 capitalize mt-0.5">${rec.eligibility_status.replace('_', ' ')}</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Best Resume Match Tag -->
+              ${rec.best_resume_name ? `
+                <div class="px-3.5 py-2 rounded-xl bg-indigo-50/60 border border-indigo-100 flex items-center justify-between text-xs text-indigo-900">
+                  <span class="flex items-center space-x-1.5 font-medium">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5 text-indigo-600"></i>
+                    <span>Optimal Resume Fit: <strong>${rec.best_resume_name}</strong></span>
+                  </span>
+                  <button onclick="openDeepCompareModal('${rec.job_id}')" class="text-indigo-600 hover:text-indigo-800 font-semibold underline">Deep Compare</button>
+                </div>
+              ` : ''}
+
+              <!-- Skills Comparison -->
+              <div class="space-y-2">
+                <div class="flex flex-wrap gap-1.5 items-center">
+                  <span class="text-xs font-semibold text-slate-500 mr-1">Matched Skills:</span>
+                  ${rec.matched_skills.map(s => `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-xs font-medium border border-emerald-200">${s}</span>`).join('') || '<span class="text-xs text-slate-400">None</span>'}
+                </div>
+                ${rec.missing_skills.length ? `
+                  <div class="flex flex-wrap gap-1.5 items-center">
+                    <span class="text-xs font-semibold text-slate-500 mr-1">Skill Gaps:</span>
+                    ${rec.missing_skills.slice(0, 5).map(s => `<span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-xs font-medium">${s}</span>`).join('')}
+                  </div>
+                ` : ''}
+              </div>
+
+              <!-- AI Explainability Reasons -->
+              <div class="bg-slate-50 rounded-xl p-3 border border-slate-100 space-y-1">
+                <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1 flex items-center">
+                  <i data-lucide="info" class="w-3.5 h-3.5 mr-1 text-indigo-600"></i> Why this fits your profile:
+                </div>
+                ${rec.reasons.map(r => `<div class="text-xs text-slate-700 flex items-start space-x-1.5"><span class="text-indigo-500 font-bold">•</span><span>${r}</span></div>`).join('')}
+              </div>
+
+              <!-- Actions -->
+              <div class="pt-2 flex items-center justify-between border-t border-slate-100">
+                <a href="${job.original_url}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-600 hover:text-indigo-600 font-medium flex items-center space-x-1">
+                  <span>View Employer Posting</span>
+                  <i data-lucide="external-link" class="w-3 h-3"></i>
+                </a>
+                <div class="flex items-center space-x-2">
+                  <button onclick="recordFeedback('${rec.id}', 'dismissed')" class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-xs font-medium text-slate-600">Dismiss</button>
+                  <button onclick="trackApplicationDirect('${job.id}', '${rec.best_resume_id || ''}', 'saved')" class="px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold flex items-center space-x-1">
+                    <i data-lucide="bookmark" class="w-3.5 h-3.5"></i>
+                    <span>Save Role</span>
+                  </button>
+                  <button onclick="trackApplicationDirect('${job.id}', '${rec.best_resume_id || ''}', 'applied')" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center space-x-1 shadow-sm">
+                    <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                    <span>Mark Applied</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+        lucide.createIcons();
+      } catch (err) {
+        container.innerHTML = `<div class="p-8 text-center text-rose-600 text-sm">Failed to load recommendations. Please verify backend connection.</div>`;
+      }
+    }
+
+    async function syncVerifiedEmployerSeeds() {
+      try {
+        showToast('Syncing verified employer postings...', 'info');
+        const res = await fetch(`${API_BASE}/jobs/sync-seeds`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const synced = await res.json();
+          showToast(`Synced ${synced.length} verified jobs into radar!`, 'success');
+          refreshRecommendations();
+        }
+      } catch (e) {
+        showToast('Error syncing employer seeds', 'error');
+      }
+    }
+
+    // --- TAB 2: JOBS DIRECTORY ---
+    function debounceFetchJobs() {
+      clearTimeout(jobsDebounceTimer);
+      jobsDebounceTimer = setTimeout(fetchJobsList, 300);
+    }
+
+    async function fetchJobsList() {
+      const container = document.getElementById('jobsListContainer');
+      const query = document.getElementById('jobSearchQuery').value.trim();
+      const workMode = document.getElementById('jobFilterWorkMode').value;
+      const location = document.getElementById('jobFilterLocation').value.trim();
+      const minExp = document.getElementById('jobFilterExp').value;
+
+      const params = new URLSearchParams();
+      if (query) params.append('query', query);
+      if (workMode) params.append('work_mode', workMode);
+      if (location) params.append('location', location);
+      if (minExp) params.append('min_exp', minExp);
+
+      try {
+        const res = await fetch(`${API_BASE}/jobs?${params.toString()}`);
+        const jobs = await res.json();
+
+        if (!jobs.length) {
+          container.innerHTML = `<div class="bg-white rounded-2xl p-8 text-center text-slate-500 border border-slate-200">No jobs match the specified filters.</div>`;
+          return;
+        }
+
+        container.innerHTML = jobs.map(job => `
+          <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hover:border-slate-300 transition space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+              <div>
+                <div class="flex items-center space-x-2">
+                  <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">${job.company_name}</span>
+                  <span class="text-slate-300">•</span>
+                  <span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-700 capitalize">${job.work_mode}</span>
+                  ${job.is_link_verified ? '<span class="text-[11px] text-emerald-600 font-medium">Verified Active Link</span>' : '<span class="text-[11px] text-slate-400">Unverified</span>'}
+                </div>
+                <h3 class="text-base font-bold text-slate-900 mt-1">${job.title}</h3>
+                <div class="text-xs text-slate-500 mt-0.5 flex items-center space-x-3">
+                  <span>${job.location}</span>
+                  ${job.min_salary ? `<span>$${(job.min_salary/1000).toFixed(0)}k - $${(job.max_salary/1000).toFixed(0)}k</span>` : ''}
+                  <span>Min ${job.min_experience_years} yrs exp</span>
+                </div>
+              </div>
+              <div class="flex items-center space-x-2">
+                <a href="${job.original_url}" target="_blank" class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-xs font-medium text-slate-700 flex items-center space-x-1">
+                  <span>Visit Posting</span>
+                  <i data-lucide="external-link" class="w-3 h-3"></i>
+                </a>
+                <button onclick="trackApplicationDirect('${job.id}', null, 'saved')" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold">Track</button>
+              </div>
+            </div>
+            <p class="text-xs text-slate-600 line-clamp-2">${job.description}</p>
+            <div class="flex flex-wrap gap-1 pt-1">
+              ${(job.required_skills || []).map(s => `<span class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[11px] font-medium">${s}</span>`).join('')}
+            </div>
+          </div>
+        `).join('');
+        lucide.createIcons();
+      } catch (e) {
+        container.innerHTML = `<div class="p-6 text-center text-rose-600 text-sm">Failed to load jobs list.</div>`;
+      }
+    }
+
+    function openAddJobModal() {
+      document.getElementById('addJobModal').classList.remove('hidden');
+    }
+    function closeAddJobModal() {
+      document.getElementById('addJobModal').classList.add('hidden');
+    }
+
+    async function submitAddJob(e) {
+      e.preventDefault();
+      const payload = {
+        company_name: document.getElementById('newJobCompany').value.trim(),
+        title: document.getElementById('newJobTitle').value.trim(),
+        work_mode: document.getElementById('newJobWorkMode').value,
+        min_experience_years: parseFloat(document.getElementById('newJobMinExp').value) || 0.0,
+        location: document.getElementById('newJobLocation').value.trim(),
+        original_url: document.getElementById('newJobUrl').value.trim(),
+        description: document.getElementById('newJobDesc').value.trim()
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/jobs`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          showToast('Job posting ingested successfully!', 'success');
+          closeAddJobModal();
+          fetchJobsList();
+        } else {
+          const err = await res.json();
+          showToast(err.detail || 'Failed to add job', 'error');
+        }
+      } catch (err) {
+        showToast('Network error adding job', 'error');
+      }
+    }
+
+    async function triggerFreshnessCheck() {
+      showToast('Running automated link verifier...', 'info');
+      try {
+        const res = await fetch(`${API_BASE}/jobs/verify-freshness?limit=20`, { method: 'POST' });
+        const data = await res.json();
+        showToast(`Verified freshness for ${data.verified_count} active jobs`, 'success');
+        fetchJobsList();
+      } catch (e) {
+        showToast('Link verification failed', 'error');
+      }
+    }
+
+    // --- TAB 3: MULTI-RESUME PORTFOLIO ---
+    async function fetchResumesList() {
+      const container = document.getElementById('resumesListContainer');
+      try {
+        const res = await fetch(`${API_BASE}/resumes`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const resumes = await res.json();
+
+        if (!resumes.length) {
+          container.innerHTML = `
+            <div class="bg-white rounded-2xl p-10 text-center border border-slate-200">
+              <i data-lucide="file-up" class="w-10 h-10 text-indigo-500 mx-auto mb-2"></i>
+              <h3 class="text-base font-bold text-slate-900">No Resumes Uploaded Yet</h3>
+              <p class="text-xs text-slate-500 mt-1">Upload tailored resumes in PDF, DOCX, or TXT format.</p>
+            </div>
+          `;
+          lucide.createIcons();
+          return;
+        }
+
+        container.innerHTML = resumes.map(r => {
+          const ext = r.extracted_data || {};
+          const skills = ext.skills || [];
+          const edu = ext.education || [];
+          const expYears = ext.experience_years || 0.0;
+
+          return `
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
+              <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                <div>
+                  <div class="flex items-center space-x-2">
+                    <span class="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800">${r.category}</span>
+                    <span class="text-xs font-semibold text-slate-500">Version ${r.version}</span>
+                  </div>
+                  <h3 class="text-base font-bold text-slate-900 mt-1">${r.file_name}</h3>
+                  <div class="text-xs text-slate-500 mt-0.5">Uploaded on ${new Date(r.created_at).toLocaleDateString()}</div>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <button onclick="openCorrectionModal('${r.id}', '${r.category}', ${expYears}, '${skills.join(', ')}')" class="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center space-x-1">
+                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                    <span>Edit / Verify Data</span>
+                  </button>
+                  <button onclick="deleteResume('${r.id}')" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition" title="Delete Resume">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Parsed Intelligence Stats -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 rounded-xl p-3 border border-slate-100 text-xs">
+                <div>
+                  <span class="text-slate-400 block text-[10px] uppercase font-bold">Skills Parsed</span>
+                  <span class="font-bold text-slate-900">${skills.length} Canonical</span>
+                </div>
+                <div>
+                  <span class="text-slate-400 block text-[10px] uppercase font-bold">Experience Timeline</span>
+                  <span class="font-bold text-slate-900">${expYears} Years</span>
+                </div>
+                <div>
+                  <span class="text-slate-400 block text-[10px] uppercase font-bold">Education Degrees</span>
+                  <span class="font-bold text-slate-900">${edu.length} Degrees</span>
+                </div>
+                <div>
+                  <span class="text-slate-400 block text-[10px] uppercase font-bold">Parser Confidence</span>
+                  <span class="font-bold text-emerald-600">High (1.0)</span>
+                </div>
+              </div>
+
+              <!-- Extracted Skills Badges -->
+              <div>
+                <span class="text-xs font-semibold text-slate-500 block mb-1.5">Extracted Skills Taxonomy:</span>
+                <div class="flex flex-wrap gap-1.5">
+                  ${skills.map(s => `<span class="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-800 text-xs font-medium shadow-2xs">${s}</span>`).join('')}
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+        lucide.createIcons();
+      } catch (e) {
+        container.innerHTML = `<div class="p-6 text-center text-rose-600 text-sm">Failed to fetch resumes.</div>`;
+      }
+    }
+
+    async function handleResumeFileSelected(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const category = prompt("Assign Category for this resume (e.g. sde, ai_ml, data_eng, devops):", "sde") || "sde";
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("category", category);
+
+      showToast("Uploading and parsing structured resume...", "info");
+      try {
+        const res = await fetch(`${API_BASE}/resumes/upload`, {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token}` },
+          body: formData
+        });
+        if (res.ok) {
+          showToast("Resume uploaded & parsed successfully!", "success");
+          fetchResumesList();
+        } else {
+          const err = await res.json();
+          showToast(err.detail || "Upload failed", "error");
+        }
+      } catch (err) {
+        showToast("Error uploading file", "error");
+      }
+    }
+
+    function openCorrectionModal(id, category, exp, skillsStr) {
+      document.getElementById('corrResumeId').value = id;
+      document.getElementById('corrCategory').value = category;
+      document.getElementById('corrExpYears').value = exp;
+      document.getElementById('corrSkills').value = skillsStr;
+      document.getElementById('correctionModal').classList.remove('hidden');
+    }
+    function closeCorrectionModal() {
+      document.getElementById('correctionModal').classList.add('hidden');
+    }
+
+    async function submitResumeCorrection(e) {
+      e.preventDefault();
+      const id = document.getElementById('corrResumeId').value;
+      const category = document.getElementById('corrCategory').value.trim();
+      const experience_years = parseFloat(document.getElementById('corrExpYears').value) || 0.0;
+      const skills = document.getElementById('corrSkills').value.split(',').map(s => s.trim()).filter(Boolean);
+
+      try {
+        const res = await fetch(`${API_BASE}/resumes/${id}/corrections`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ category, experience_years, skills })
+        });
+        if (res.ok) {
+          showToast('Resume data corrected and locked!', 'success');
+          closeCorrectionModal();
+          fetchResumesList();
+        }
+      } catch (e) {
+        showToast('Error updating corrections', 'error');
+      }
+    }
+
+    async function deleteResume(id) {
+      if (!confirm("Are you sure you want to delete this resume?")) return;
+      try {
+        const res = await fetch(`${API_BASE}/resumes/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          showToast('Resume deleted', 'success');
+          fetchResumesList();
+        }
+      } catch (e) {
+        showToast('Failed to delete resume', 'error');
+      }
+    }
+
+    // --- TAB 4: APPLICATION TRACKER ---
+    async function fetchApplications() {
+      try {
+        const res = await fetch(`${API_BASE}/applications`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const apps = await res.json();
+
+        const columns = { saved: [], applied: [], interview: [], offer: [] };
+        apps.forEach(app => {
+          if (columns[app.status]) columns[app.status].push(app);
+          else columns.saved.push(app);
+        });
+
+        for (let col in columns) {
+          const listEl = document.getElementById(`colList-${col}`);
+          const countEl = document.getElementById(`colCount-${col}`);
+          countEl.innerText = columns[col].length;
+
+          if (!columns[col].length) {
+            listEl.innerHTML = `<div class="p-4 text-center text-xs text-slate-400 italic">No applications</div>`;
+            continue;
+          }
+
+          listEl.innerHTML = columns[col].map(app => `
+            <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 hover:shadow-md transition space-y-2.5">
+              <div class="flex items-start justify-between">
+                <div>
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-600">${app.job ? app.job.company_name : 'Company'}</span>
+                  <h4 class="text-xs font-bold text-slate-900 mt-0.5">${app.job ? app.job.title : 'Position'}</h4>
+                </div>
+                <button onclick="deleteApplication('${app.id}')" class="text-slate-300 hover:text-rose-500">
+                  <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+
+              ${app.notes ? `<p class="text-[11px] text-slate-600 bg-slate-50 p-2 rounded-lg italic">"${app.notes}"</p>` : ''}
+              ${app.recruiter_name ? `<div class="text-[10px] text-slate-500">Recruiter: <strong>${app.recruiter_name}</strong></div>` : ''}
+
+              <!-- Status advancement buttons -->
+              <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                ${col !== 'applied' ? `<button onclick="updateAppStage('${app.id}', 'applied')" class="text-indigo-600 hover:underline">Apply</button>` : ''}
+                ${col !== 'interview' ? `<button onclick="updateAppStage('${app.id}', 'interview')" class="text-amber-600 hover:underline">Interview</button>` : ''}
+                ${col !== 'offer' ? `<button onclick="updateAppStage('${app.id}', 'offer')" class="text-emerald-600 hover:underline font-bold">Offer 🎉</button>` : ''}
+              </div>
+            </div>
+          `).join('');
+        }
+        lucide.createIcons();
+      } catch (e) {
+        showToast('Error loading application tracker', 'error');
+      }
+    }
+
+    async function trackApplicationDirect(jobId, resumeId, status) {
+      try {
+        const res = await fetch(`${API_BASE}/applications`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ job_id: jobId, resume_id: resumeId, status })
+        });
+        if (res.ok) {
+          showToast(`Role moved to ${status} in tracker!`, 'success');
+        } else {
+          const err = await res.json();
+          showToast(err.detail || 'Could not track role', 'info');
+        }
+      } catch (e) {
+        showToast('Network error tracking role', 'error');
+      }
+    }
+
+    async function updateAppStage(id, newStatus) {
+      try {
+        const res = await fetch(`${API_BASE}/applications/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ status: newStatus })
+        });
+        if (res.ok) {
+          showToast(`Application updated to ${newStatus}`, 'success');
+          fetchApplications();
+        }
+      } catch (e) {
+        showToast('Failed to update stage', 'error');
+      }
+    }
+
+    async function deleteApplication(id) {
+      try {
+        const res = await fetch(`${API_BASE}/applications/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          showToast('Removed from tracker', 'info');
+          fetchApplications();
+        }
+      } catch (e) {
+        showToast('Failed to delete', 'error');
+      }
+    }
+
+    // --- TAB 5: CANDIDATE PROFILE ---
+    async function fetchProfileData() {
+      try {
+        const res = await fetch(`${API_BASE}/profile/me`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const p = await res.json();
+          document.getElementById('profFullName').value = p.full_name || '';
+          document.getElementById('profYearsExp').value = p.years_of_experience || 0;
+          document.getElementById('profHeadline').value = p.headline || '';
+          document.getElementById('profRoles').value = (p.preferred_roles || []).join(', ');
+          document.getElementById('profMinSalary').value = p.min_salary || '';
+          document.getElementById('profExpectedSalary').value = p.expected_salary || '';
+          document.getElementById('profDegree').value = p.degree || '';
+          document.getElementById('profUniversity').value = p.university || '';
+          document.getElementById('profLocations').value = (p.preferred_locations || []).join(', ');
+
+          const modes = p.preferred_work_modes || [];
+          document.getElementById('workModeRemote').checked = modes.includes('remote');
+          document.getElementById('workModeHybrid').checked = modes.includes('hybrid');
+          document.getElementById('workModeOnsite').checked = modes.includes('onsite');
+        }
+      } catch (e) {
+        showToast('Error fetching profile', 'error');
+      }
+    }
+
+    async function handleProfileSave(e) {
+      e.preventDefault();
+      const modes = [];
+      if (document.getElementById('workModeRemote').checked) modes.push('remote');
+      if (document.getElementById('workModeHybrid').checked) modes.push('hybrid');
+      if (document.getElementById('workModeOnsite').checked) modes.push('onsite');
+
+      const payload = {
+        full_name: document.getElementById('profFullName').value.trim(),
+        years_of_experience: parseFloat(document.getElementById('profYearsExp').value) || 0.0,
+        headline: document.getElementById('profHeadline').value.trim(),
+        preferred_roles: document.getElementById('profRoles').value.split(',').map(s => s.trim()).filter(Boolean),
+        min_salary: parseFloat(document.getElementById('profMinSalary').value) || null,
+        expected_salary: parseFloat(document.getElementById('profExpectedSalary').value) || null,
+        degree: document.getElementById('profDegree').value.trim(),
+        university: document.getElementById('profUniversity').value.trim(),
+        preferred_locations: document.getElementById('profLocations').value.split(',').map(s => s.trim()).filter(Boolean),
+        preferred_work_modes: modes
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/profile/me`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          showToast('Profile preferences saved successfully!', 'success');
+        } else {
+          showToast('Failed to save profile', 'error');
+        }
+      } catch (e) {
+        showToast('Network error saving profile', 'error');
+      }
+    }
+
+    // --- DEEP COMPARE MODAL ---
+    async function openDeepCompareModal(jobId) {
+      const modal = document.getElementById('compareModal');
+      const content = document.getElementById('compareModalContent');
+      content.innerHTML = `<div class="py-8 text-center text-slate-400"><i data-lucide="loader" class="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-600"></i>Comparing all portfolio resumes...</div>`;
+      modal.classList.remove('hidden');
+      lucide.createIcons();
+
+      try {
+        const res = await fetch(`${API_BASE}/recommendations/match-job/${jobId}`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        content.innerHTML = `
+          <div class="space-y-4">
+            <div class="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-xs text-indigo-900">
+              Optimal Resume Selected: <strong>${data.best_resume_category.toUpperCase()}</strong> with <strong>${data.overall_match}%</strong> overall fitness.
+            </div>
+
+            <div class="space-y-3">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">Resume Scores Breakdown</h4>
+              <div class="grid grid-cols-1 gap-2.5">
+                ${data.resume_scores.map(rs => `
+                  <div class="p-3 rounded-xl border ${rs.resume_category === data.best_resume_category ? 'border-indigo-400 bg-indigo-50/30' : 'border-slate-200 bg-white'} text-xs">
+                    <div class="flex items-center justify-between font-bold">
+                      <span class="uppercase">${rs.resume_category} Resume</span>
+                      <span class="text-indigo-600">${rs.overall_match_score}% Match</span>
+                    </div>
+                    <div class="mt-2 grid grid-cols-3 gap-2 text-[11px] text-slate-500">
+                      <div>Skills: <strong>${rs.skill_match_score}%</strong></div>
+                      <div>Experience: <strong>${rs.experience_match_score}%</strong></div>
+                      <div>Education: <strong>${rs.education_match_score}%</strong></div>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <div class="space-y-2 pt-2 border-t border-slate-100">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">Decision Rationales</h4>
+              ${data.recommendation_reasons.map(r => `<div class="text-xs text-slate-700 flex items-start space-x-1"><span class="text-indigo-500">•</span><span>${r}</span></div>`).join('')}
+            </div>
+          </div>
+        `;
+        lucide.createIcons();
+      } catch (e) {
+        content.innerHTML = `<div class="p-4 text-center text-rose-600 text-xs">Failed to compare resumes.</div>`;
+      }
+    }
+
+    function closeCompareModal() {
+      document.getElementById('compareModal').classList.add('hidden');
+    }
+
+    async function recordFeedback(recId, type) {
+      try {
+        await fetch(`${API_BASE}/recommendations/${recId}/feedback`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ feedback_type: type })
+        });
+        showToast('Feedback recorded', 'info');
+        refreshRecommendations();
+      } catch (e) {}
+    }
+  </script>
+</body>
+</html>
