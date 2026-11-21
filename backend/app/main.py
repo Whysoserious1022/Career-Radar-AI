@@ -39,6 +39,14 @@ async def lifespan(app: FastAPI):
             db.add(admin_prof)
             await db.commit()
 
+        # Seed verified jobs if table is empty
+        jobs_check = await db.execute(select(Job).limit(1))
+        if not jobs_check.scalar_one_or_none():
+            from app.connectors.seed_data import get_prepared_seed_jobs
+            for pj in get_prepared_seed_jobs():
+                db.add(Job(**pj))
+            await db.commit()
+
     yield
     # Teardown
     await engine.dispose()

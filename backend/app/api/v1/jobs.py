@@ -8,6 +8,8 @@ from app.models.job import Job, JobSource
 from app.schemas.job import JobCreate, JobResponse, JobFilter
 from app.connectors.base import BaseJobConnector
 from app.connectors.seed_data import get_prepared_seed_jobs
+from app.connectors.ats_connectors import AuthenticATSScraper
+from app.connectors.free_job_apis import ArbeitnowConnector, RemotiveConnector, JobicyConnector
 from app.services.skill_extractor import extract_skills_from_text
 from app.workers.freshness_checker import JobFreshnessVerifier
 
@@ -71,6 +73,82 @@ async def sync_sample_jobs(db: AsyncSession = Depends(get_db)):
     for j in synced:
         await db.refresh(j)
     return synced
+
+@router.post("/sync-free-apis")
+async def sync_free_job_apis(
+    limit_per_source: int = Query(default=20, ge=5, le=50),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Scrapes and syncs live, active job postings from freely available public job APIs
+    (Arbeitnow, Remotive, Jobicy) with automatic skill extraction and deduplication.
+    """
+    connectors = [
+        ArbeitnowConnector(),
+        RemotiveConnector(),
+        JobicyConnector()
+    ]
+    total_ingested = 0
+    total_deduplicated = 0
+    sources_summary = {}
+
+    for conn in connectors:
+        try:
+            jobs = await conn.fetch_jobs(limit=limit_per_source)
+            ingested_count = 0
+            for item in jobs:
+                existing = await db.execute(select(Job).where(Job.dedup_hash == item["dedup_hash"]))
+                if not existing.scalar_one_or_none():
+                    db.add(Job(**item))
+                    ingested_count += 1
+                else:
+                    total_deduplicated += 1
+            sources_summary[conn.source_name] = len(jobs)
+            total_ingested += ingested_count
+        except Exception as e:
+            sources_summary[conn.source_name] = f"Error: {str(e)}"
+
+    await db.commit()
+    return {
+        "status": "success",
+        "total_new_jobs_ingested": total_ingested,
+        "total_deduplicated": total_deduplicated,
+        "sources": sources_summary
+    }
+
+@router.post("/sync-authentic-jobs")
+async def sync_authentic_employer_jobs(
+    limit_per_company: int = Query(default=3, ge=1, le=10),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Scrapes live, verified requisitions directly from 15+ tech employer ATS portals
+    (Greenhouse & Lever: Cloudflare, Figma, GitLab, Datadog, Reddit, Discord, Dropbox,
+    Elastic, Instacart, Pinterest, Robinhood, Roblox, Twilio, Airbnb, Stripe, Spotify, Palantir).
+    """
+    scraped_jobs = await AuthenticATSScraper.scrape_all(limit_per_company=limit_per_company)
+    total_ingested = 0
+    total_deduplicated = 0
+    companies_summary = {}
+
+    for item in scraped_jobs:
+        comp = item.get("company_name", "Unknown")
+        companies_summary[comp] = companies_summary.get(comp, 0) + 1
+        existing = await db.execute(select(Job).where(Job.dedup_hash == item["dedup_hash"]))
+        if not existing.scalar_one_or_none():
+            db.add(Job(**item))
+            total_ingested += 1
+        else:
+            total_deduplicated += 1
+
+    await db.commit()
+    return {
+        "status": "success",
+        "total_scraped": len(scraped_jobs),
+        "total_new_jobs_ingested": total_ingested,
+        "total_deduplicated": total_deduplicated,
+        "companies_represented": companies_summary
+    }
 
 @router.get("", response_model=List[JobResponse])
 async def list_jobs(

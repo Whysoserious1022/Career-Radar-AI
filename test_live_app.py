@@ -220,12 +220,13 @@ def main():
 
     # 16. Job Creation & Duplicate Fingerprint Guard
     log_step(16, "Job Ingestion: Custom Job & Canonical Deduplication")
+    unique_job_suffix = uuid.uuid4().hex[:6]
     new_job = {
-        "company_name": "Vertex AI Labs",
+        "company_name": f"Vertex AI Labs {unique_job_suffix}",
         "title": "Senior Cloud Infrastructure Engineer",
         "work_mode": "hybrid",
         "location": "San Francisco, CA",
-        "original_url": "https://vertex.ai/careers/cloud-infra?ref=linkedin",
+        "original_url": f"https://vertex.ai/careers/cloud-infra-{unique_job_suffix}?ref=linkedin",
         "description": "Looking for an engineer experienced in Python, Kubernetes, Terraform, and AWS."
     }
     r_new_job = session.post(f"{BASE_URL}/api/v1/jobs", json=new_job)
