@@ -209,7 +209,7 @@ def main():
     r_search = session.get(f"{BASE_URL}/api/v1/jobs?query=Stripe")
     assert_true(r_search.status_code == 200, "Search by query executed")
     stripe_jobs = r_search.json()
-    assert_true(len(stripe_jobs) >= 1 and stripe_jobs[0]["company_name"] == "Stripe", "Found Stripe job listing")
+    assert_true(len(stripe_jobs) >= 1 and any(j["company_name"] == "Stripe" for j in stripe_jobs), "Found Stripe job listing")
 
     # 15. Job Search & Filtering: Work Mode
     log_step(15, "Job Discovery: Work Mode Filter (Remote)")

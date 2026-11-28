@@ -149,6 +149,124 @@ def extract_skills_from_text(text: str) -> Tuple[List[str], Dict[str, List[str]]
 
     return sorted(list(found_canonical)), categorized
 
+def extract_experience_requirement(text: str, title: str = "") -> float:
+    """
+    Extracts the minimum years of experience required from job description text or title.
+    Supports patterns such as:
+      - "5+ years of experience", "5+ yrs experience"
+      - "minimum of 3 years", "min 4 yrs"
+      - "at least 6 years", "3-5 years" (takes 3.0)
+      - "7+ years hands-on experience"
+    Falls back to intelligent title seniority heuristics if not explicitly specified.
+    """
+    if not text and not title:
+        return 1.5
+
+    clean_text = text.lower() if text else ""
+    clean_title = title.lower() if title else ""
+
+    # Pattern 1: Minimum / at least X years
+    m = re.search(r'(?:at\s+least|minimum\s+of|min\.?\s+of|minimum|min\.?)\s*(\d+(?:\.\d+)?)\s*(?:\+)?\s*(?:years|yrs)', clean_text)
+    if m:
+        try:
+            val = float(m.group(1))
+            if 0.5 <= val <= 25.0:
+                return val
+        except ValueError:
+            pass
+
+    # Pattern 2: Range "X-Y years" or "X to Y years" -> take lower bound
+    m = re.search(r'(\d+(?:\.\d+)?)\s*(?:-|to)\s*(\d+(?:\.\d+)?)\s*(?:years|yrs)\s+(?:of\s+)?(?:experience|exp|industry|software|engineering|hands-on)', clean_text)
+    if m:
+        try:
+            val = float(m.group(1))
+            if 0.5 <= val <= 25.0:
+                return val
+        except ValueError:
+            pass
+
+    # Pattern 3: "X+ years of experience" or "X+ yrs"
+    m = re.search(r'(\d+(?:\.\d+)?)\s*(?:\+)\s*(?:years|yrs)(?:\s+of)?(?:\s+(?:professional|work|industry|software|engineering|hands-on|relevant))?\s+experience', clean_text)
+    if m:
+        try:
+            val = float(m.group(1))
+            if 0.5 <= val <= 25.0:
+                return val
+        except ValueError:
+            pass
+
+    # Pattern 4: Generic "X years experience"
+    m = re.search(r'(\d+(?:\.\d+)?)\s*(?:years|yrs)\s+(?:of\s+)?experience', clean_text)
+    if m:
+        try:
+            val = float(m.group(1))
+            if 0.5 <= val <= 25.0:
+                return val
+        except ValueError:
+            pass
+
+    # Fallback heuristics based on title seniority
+    if any(k in clean_title for k in ["distinguished", "fellow", "vp", "director"]):
+        return 10.0
+    if any(k in clean_title for k in ["principal", "staff"]):
+        return 7.0
+    if any(k in clean_title for k in ["lead", "architect", "tech lead"]):
+        return 5.0
+    if any(k in clean_title for k in ["senior", "sr.", "sr "]):
+        return 4.0
+    if any(k in clean_title for k in ["junior", "jr.", "jr ", "entry", "associate", "intern", "new grad", "graduate"]):
+        return 0.5
+    
+    return 2.0
+
+
+def extract_requirements_checklist(
+    description: str,
+    title: str = "",
+    required_skills: Optional[List[str]] = None,
+    min_exp: float = 0.0,
+    work_mode: str = "remote"
+) -> List[str]:
+    """
+    Synthesizes the core 'What They Need' requirements checklist for a role.
+    """
+    checklist = []
+    
+    # 1. Experience requirement
+    if min_exp > 0:
+        checklist.append(f"Experience: Minimum {min_exp:g}+ years professional experience required")
+    else:
+        checklist.append("Experience: Open to all experience levels (Entry / Early Career)")
+
+    # 2. Must-have technical skills
+    skills = required_skills or []
+    if skills:
+        top_skills = ", ".join(skills[:5])
+        checklist.append(f"Core Tech Stack: {top_skills}")
+
+    # 3. Work mode & location
+    mode_str = work_mode.capitalize() if work_mode else "Remote"
+    checklist.append(f"Work Arrangement: {mode_str} eligibility")
+
+    # 4. Detect degree/education requirement if present
+    desc_lower = description.lower() if description else ""
+    if "phd" in desc_lower or "ph.d" in desc_lower:
+        checklist.append("Education: PhD in Computer Science, AI/ML, or equivalent research background preferred")
+    elif "master" in desc_lower or "m.s." in desc_lower or "ms in" in desc_lower:
+        checklist.append("Education: Bachelor's or Master's degree in Computer Science or related quantitative field")
+    elif "bachelor" in desc_lower or "b.s." in desc_lower or "bs in" in desc_lower:
+        checklist.append("Education: Bachelor's degree in CS, Engineering, or equivalent practical experience")
+
+    # 5. Key domain requirement
+    if any(k in desc_lower or k in title.lower() for k in ["distributed system", "high throughput", "low latency", "concurrency"]):
+        checklist.append("Domain Focus: Distributed systems, high-scale infrastructure & concurrency")
+    elif any(k in desc_lower or k in title.lower() for k in ["llm", "transformer", "pytorch", "genai", "rag"]):
+        checklist.append("Domain Focus: Frontier LLM pipelines, vector similarity search & AI inference")
+    elif any(k in desc_lower or k in title.lower() for k in ["frontend", "ui", "ux", "react", "nextjs", "css"]):
+        checklist.append("Domain Focus: High-performance UI, client-side rendering & responsive interfaces")
+
+    return checklist
+
 class SkillExtractor:
     @staticmethod
     def extract_skills(text: str) -> List[str]:

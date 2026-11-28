@@ -11,6 +11,7 @@ from app.models.user import User
 from app.models.profile import UserProfile
 from app.models.resume import Resume
 from app.models.job import Job
+from app.models.application import Application
 from app.models.matching import Recommendation, RecommendationFeedback, ResumeJobMatch
 from app.schemas.recommendation import (
     RecommendationResponse,
@@ -54,14 +55,33 @@ async def get_recommendations(
     )
     jobs = jobs_res.scalars().all()
 
-    if not jobs or not resumes:
+    if not jobs:
         return []
+
+    # Fetch candidate implicit behavioral signals from tracker & application pipeline
+    apps_res = await db.execute(
+        select(Application).options(selectinload(Application.job)).where(Application.user_id == current_user.id)
+    )
+    user_apps = apps_res.scalars().all()
+    saved_companies = [a.job.company_name.lower() for a in user_apps if a.job and a.status in ["saved", "interview", "offer"]]
+    applied_companies = [a.job.company_name.lower() for a in user_apps if a.job and a.status == "applied"]
+    engaged_skills = []
+    for a in user_apps:
+        if a.job and a.job.required_skills:
+            engaged_skills.extend([s.lower() for s in a.job.required_skills])
+
+    candidate_signals = {
+        "saved_companies": saved_companies,
+        "applied_companies": applied_companies,
+        "engaged_skills": engaged_skills,
+        "dismissed_companies": []
+    }
 
     recommendations = []
     now = datetime.now(timezone.utc)
 
     for job in jobs:
-        eval_result = RecommendationMatcher.match_candidate_to_job(profile, resumes, job)
+        eval_result = RecommendationMatcher.match_candidate_to_job(profile, resumes, job, candidate_signals=candidate_signals)
         score = eval_result["composite_score"]
 
         if score >= min_score:
@@ -72,8 +92,23 @@ async def get_recommendations(
                 job=JobResponse.model_validate(job),
                 best_resume_id=eval_result["best_resume_id"],
                 best_resume_name=eval_result["best_resume_name"],
+                best_resume_category=eval_result.get("best_resume_category"),
                 composite_score=score,
                 eligibility_status=eval_result["eligibility_status"],
+                can_apply=eval_result.get("can_apply", True),
+                experience_matched=eval_result.get("experience_matched", True),
+                candidate_experience_years=eval_result.get("candidate_experience_years", 0.0),
+                required_experience_years=eval_result.get("required_experience_years", 0.0),
+                experience_gap_years=eval_result.get("experience_gap_years", 0.0),
+                what_they_need=eval_result.get("what_they_need", []),
+                ineligibility_reason=eval_result.get("ineligibility_reason"),
+                skill_match_score=eval_result.get("skill_match_score", 0.0),
+                role_trajectory_score=eval_result.get("role_trajectory_score", 0.0),
+                experience_fit_score=eval_result.get("experience_fit_score", 0.0),
+                work_mode_fit_score=eval_result.get("work_mode_fit_score", 0.0),
+                semantic_score=eval_result.get("semantic_score", 0.0),
+                lexical_score=eval_result.get("lexical_score", 0.0),
+                freshness_boost=eval_result.get("freshness_boost", 0.0),
                 matched_skills=eval_result["matched_skills"],
                 missing_skills=eval_result["missing_skills"],
                 reasons=eval_result["reasons"],
@@ -83,6 +118,19 @@ async def get_recommendations(
     # Sort descending by composite score
     recommendations.sort(key=lambda r: r.composite_score, reverse=True)
     return recommendations[:limit]
+
+@router.get("/alerts", response_model=List[RecommendationResponse])
+async def get_instant_alerts(
+    threshold: float = Query(default=80.0, ge=50.0, le=100.0),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Stage 4 Delivery: Instant High-Priority Alert Digest.
+    Filters recommendations for roles matching >= threshold (or early applicant advantage within 24-48 hrs).
+    """
+    all_recs = await get_recommendations(limit=25, min_score=threshold, current_user=current_user, db=db)
+    return all_recs
 
 @router.post("/match-job/{job_id}", response_model=ResumeJobComparisonResponse)
 async def compare_resumes_for_job(

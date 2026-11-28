@@ -103,6 +103,34 @@
       </div>
     </div>
 
+    <!-- REAL-TIME SCRAPE & QUICK DIAGNOSIS BANNER (SHARED ACROSS VIEWS) -->
+    <div id="quickDiagnosisBanner" class="hidden mb-6 p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white border border-indigo-500/30 shadow-xl">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-start sm:items-center space-x-3.5">
+          <div class="w-11 h-11 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 border border-emerald-500/30">
+            <i data-lucide="check-check" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <h4 class="text-sm font-bold text-white">Live Requisitions Scraped & Diagnosed</h4>
+              <span id="diagBadgeEligible" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">0 Best-Suited</span>
+              <span id="diagBadgeGated" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">0 Exp Gated</span>
+            </div>
+            <p id="quickDiagnosisSummaryText" class="text-xs text-indigo-200 mt-1">Requisitions analyzed against your verified candidate skills and minimum required experience years.</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2.5 flex-shrink-0">
+          <button onclick="switchTab('radar')" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 text-xs font-bold transition flex items-center space-x-1.5 shadow-md">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+            <span>Inspect Best-Suited in Radar</span>
+          </button>
+          <button onclick="dismissDiagnosisBanner()" class="text-slate-400 hover:text-white p-1.5 transition" title="Dismiss">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- TAB 1: AI CAREER RADAR / RECOMMENDATIONS -->
     <div id="view-radar" class="space-y-6">
       <!-- Hero Banner -->
@@ -129,13 +157,23 @@
         </div>
       </div>
 
-      <!-- Recommendations List -->
-      <div class="flex items-center justify-between pt-2">
+      <!-- Recommendations Filter & Count Bar -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
         <div>
           <h2 class="text-xl font-bold text-slate-900">Recommended Roles</h2>
-          <p class="text-xs text-slate-500 mt-0.5">Ranked by composite match score, skill overlap, and resume category fitness</p>
+          <p class="text-xs text-slate-500 mt-0.5">Scraped opportunities diagnosed against your verified experience years and required skills</p>
         </div>
-        <div id="recCountBadge" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-200 text-slate-700">0 Matches</div>
+        <div class="flex items-center space-x-2">
+          <div class="p-1 rounded-xl bg-slate-100 border border-slate-200 flex items-center text-xs">
+            <button onclick="setRadarFilter('eligible')" id="radarFilterEligibleBtn" class="px-3 py-1 rounded-lg font-bold bg-white text-indigo-600 shadow-sm transition">
+              ✨ Best-Suited (Eligible)
+            </button>
+            <button onclick="setRadarFilter('all')" id="radarFilterAllBtn" class="px-3 py-1 rounded-lg font-medium text-slate-600 hover:text-slate-900 transition">
+              📋 All Diagnosed Roles
+            </button>
+          </div>
+          <div id="recCountBadge" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-200 text-slate-700">0 Matches</div>
+        </div>
       </div>
 
       <div id="recommendationsList" class="grid grid-cols-1 gap-5">
@@ -152,13 +190,17 @@
             <p class="text-xs text-slate-500 mt-1">Live listings extracted from verified ATS boards with canonical URL deduplication</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
-            <button onclick="syncAuthenticJobs()" class="px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition flex items-center space-x-1.5 shadow-sm" title="Pull Direct Tech Jobs from 15+ ATS Portals (Cloudflare, Figma, GitLab, Datadog, Reddit, Discord, etc.)">
-              <i data-lucide="building-2" class="w-4 h-4"></i>
-              <span>Scrape 15+ Tech Giants</span>
+            <button onclick="syncAllSources()" class="px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-sm font-semibold transition flex items-center space-x-1.5 shadow-md" title="One-click universal scrape across all 73+ tech employer career portals">
+              <i data-lucide="zap" class="w-4 h-4 text-amber-300"></i>
+              <span>Universal Scrape (All Sites)</span>
             </button>
-            <button onclick="syncFreeJobAPIs()" class="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition flex items-center space-x-1.5 shadow-sm" title="Pull Live Jobs from Arbeitnow, Remotive & Jobicy">
-              <i data-lucide="cloud-download" class="w-4 h-4"></i>
-              <span>Scrape Free Job Sites</span>
+            <button onclick="syncAuthenticJobs()" class="px-3.5 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium transition flex items-center space-x-1.5 shadow-sm" title="Pull Direct Requisitions from 73+ Tech Giants across AI/LLMs, Cloud, Fintech, DevTools, Consumer & Enterprise">
+              <i data-lucide="building-2" class="w-4 h-4"></i>
+              <span>73+ Tech Giants</span>
+            </button>
+            <button onclick="openCompanyCatalogModal()" class="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-medium transition flex items-center space-x-1.5 shadow-sm" title="Browse all 73+ verified employer career pages">
+              <i data-lucide="layout-grid" class="w-4 h-4 text-violet-600"></i>
+              <span>Explore Companies</span>
             </button>
             <button onclick="openAddJobModal()" class="px-3.5 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-medium transition flex items-center space-x-1.5 shadow-sm">
               <i data-lucide="plus" class="w-4 h-4"></i>
@@ -171,6 +213,49 @@
           </div>
         </div>
 
+        <!-- On-Demand URL Web Scraper Input Box -->
+        <div class="mt-5 p-4 rounded-xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-sm border border-indigo-900/40">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2">
+            <div class="flex items-center space-x-2">
+              <span class="p-1 rounded-md bg-indigo-500/20 text-indigo-400">
+                <i data-lucide="globe-2" class="w-4 h-4"></i>
+              </span>
+              <h3 class="text-sm font-bold tracking-tight">On-Demand Web Scraper (Any Career Page or Job URL)</h3>
+            </div>
+            <span class="text-[11px] text-indigo-300">Scrapes Ashby, Greenhouse, Lever, Workable, SmartRecruiters or generic websites</span>
+          </div>
+          <div class="flex flex-col sm:flex-row items-center gap-2">
+            <div class="relative flex-1 w-full">
+              <input type="url" id="scrapeTargetUrl" placeholder="Paste any career URL: https://jobs.ashbyhq.com/openai or https://boards.greenhouse.io/cloudflare or company.com/careers..." class="w-full px-3.5 py-2.5 rounded-lg bg-slate-800/90 border border-slate-700 text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+            </div>
+            <button onclick="executeOnDemandScrape()" id="scrapeBtn" class="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow">
+              <i data-lucide="scan-search" class="w-4 h-4"></i>
+              <span>Scrape & Match</span>
+            </button>
+          </div>
+          <div id="scrapeProgressZone" class="hidden mt-3 p-2.5 rounded-lg bg-slate-800/60 text-xs text-indigo-200 border border-slate-700/60 flex items-center space-x-2">
+            <i data-lucide="loader" class="w-4 h-4 animate-spin text-indigo-400"></i>
+            <span id="scrapeProgressText">Connecting to target career page...</span>
+          </div>
+
+          <!-- Quick Pick: Popular Company Career Pages -->
+          <div class="mt-3 flex flex-wrap gap-1.5">
+            <span class="text-[10px] text-indigo-400 font-semibold uppercase tracking-wide mr-1 self-center">Quick pick:</span>
+            <button onclick="quickScrape('https://jobs.ashbyhq.com/openai')" class="px-2 py-1 rounded-md bg-indigo-900/60 hover:bg-indigo-800 text-[10px] text-indigo-200 font-medium transition border border-indigo-800/50">OpenAI</button>
+            <button onclick="quickScrape('https://boards.greenhouse.io/anthropic')" class="px-2 py-1 rounded-md bg-indigo-900/60 hover:bg-indigo-800 text-[10px] text-indigo-200 font-medium transition border border-indigo-800/50">Anthropic</button>
+            <button onclick="quickScrape('https://jobs.ashbyhq.com/perplexity')" class="px-2 py-1 rounded-md bg-indigo-900/60 hover:bg-indigo-800 text-[10px] text-indigo-200 font-medium transition border border-indigo-800/50">Perplexity</button>
+            <button onclick="quickScrape('https://jobs.ashbyhq.com/cursor')" class="px-2 py-1 rounded-md bg-indigo-900/60 hover:bg-indigo-800 text-[10px] text-indigo-200 font-medium transition border border-indigo-800/50">Cursor</button>
+            <button onclick="quickScrape('https://boards.greenhouse.io/cloudflare')" class="px-2 py-1 rounded-md bg-indigo-900/60 hover:bg-indigo-800 text-[10px] text-indigo-200 font-medium transition border border-indigo-800/50">Cloudflare</button>
+            <button onclick="quickScrape('https://boards.greenhouse.io/databricks')" class="px-2 py-1 rounded-md bg-indigo-900/60 hover:bg-indigo-800 text-[10px] text-indigo-200 font-medium transition border border-indigo-800/50">Databricks</button>
+            <button onclick="quickScrape('https://boards.greenhouse.io/stripe')" class="px-2 py-1 rounded-md bg-indigo-900/60 hover:bg-indigo-800 text-[10px] text-indigo-200 font-medium transition border border-indigo-800/50">Stripe</button>
+            <button onclick="quickScrape('https://boards.greenhouse.io/figma')" class="px-2 py-1 rounded-md bg-indigo-900/60 hover:bg-indigo-800 text-[10px] text-indigo-200 font-medium transition border border-indigo-800/50">Figma</button>
+            <button onclick="quickScrape('https://api.lever.co/v0/postings/spotify')" class="px-2 py-1 rounded-md bg-indigo-900/60 hover:bg-indigo-800 text-[10px] text-indigo-200 font-medium transition border border-indigo-800/50">Spotify</button>
+            <button onclick="quickScrape('https://boards.greenhouse.io/scaleai')" class="px-2 py-1 rounded-md bg-indigo-900/60 hover:bg-indigo-800 text-[10px] text-indigo-200 font-medium transition border border-indigo-800/50">Scale AI</button>
+            <button onclick="quickScrape('https://boards.greenhouse.io/vercel')" class="px-2 py-1 rounded-md bg-indigo-900/60 hover:bg-indigo-800 text-[10px] text-indigo-200 font-medium transition border border-indigo-800/50">Vercel</button>
+            <button onclick="quickScrape('https://boards.greenhouse.io/coinbase')" class="px-2 py-1 rounded-md bg-indigo-900/60 hover:bg-indigo-800 text-[10px] text-indigo-200 font-medium transition border border-indigo-800/50">Coinbase</button>
+          </div>
+        </div>
+
         <!-- Filter Bar -->
         <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
           <div>
@@ -178,27 +263,107 @@
           </div>
           <div>
             <select id="jobFilterCompany" onchange="fetchJobsList()" class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-              <option value="">All Companies (20+ Top Tech)</option>
-              <option value="OpenAI">OpenAI</option>
-              <option value="Stripe">Stripe</option>
-              <option value="Meta">Meta</option>
-              <option value="Google">Google</option>
-              <option value="Amazon">Amazon</option>
-              <option value="Microsoft">Microsoft</option>
-              <option value="Apple">Apple</option>
-              <option value="Netflix">Netflix</option>
-              <option value="Databricks">Databricks</option>
-              <option value="Anthropic">Anthropic</option>
-              <option value="Cloudflare">Cloudflare</option>
-              <option value="NVIDIA">NVIDIA</option>
-              <option value="Spotify">Spotify</option>
-              <option value="Airbnb">Airbnb</option>
-              <option value="Uber">Uber</option>
-              <option value="GitHub">GitHub</option>
-              <option value="Snowflake">Snowflake</option>
-              <option value="Figma">Figma</option>
-              <option value="Palantir">Palantir</option>
-              <option value="Coinbase">Coinbase</option>
+              <option value="">All Companies (73+ Verified Employers)</option>
+              <!-- AI & Frontier Labs -->
+              <optgroup label="🤖 AI & Frontier Labs">
+                <option value="OpenAI">OpenAI</option>
+                <option value="Anthropic">Anthropic</option>
+                <option value="Perplexity AI">Perplexity AI</option>
+                <option value="Cursor">Cursor</option>
+                <option value="Cohere">Cohere</option>
+                <option value="Character.ai">Character.ai</option>
+                <option value="Replit">Replit</option>
+                <option value="Scale AI">Scale AI</option>
+                <option value="Cognition AI">Cognition AI (Devin)</option>
+                <option value="Together AI">Together AI</option>
+                <option value="Stability AI">Stability AI</option>
+                <option value="LangChain">LangChain</option>
+                <option value="Baseten">Baseten</option>
+                <option value="Modal Labs">Modal Labs</option>
+                <option value="Pika Labs">Pika Labs</option>
+                <option value="Runway">Runway</option>
+                <option value="Cartesia AI">Cartesia AI</option>
+                <option value="Vapi">Vapi</option>
+              </optgroup>
+              <!-- Cloud & Infrastructure -->
+              <optgroup label="☁️ Cloud & Infrastructure">
+                <option value="Cloudflare">Cloudflare</option>
+                <option value="Databricks">Databricks</option>
+                <option value="Datadog">Datadog</option>
+                <option value="MongoDB">MongoDB</option>
+                <option value="Vercel">Vercel</option>
+                <option value="Elastic">Elastic</option>
+                <option value="Supabase">Supabase</option>
+                <option value="Neon">Neon</option>
+                <option value="Cockroach Labs">Cockroach Labs</option>
+                <option value="Fastly">Fastly</option>
+                <option value="Netlify">Netlify</option>
+                <option value="Samsara">Samsara</option>
+                <option value="HashiCorp">HashiCorp</option>
+              </optgroup>
+              <!-- Fintech & Payments -->
+              <optgroup label="💳 Fintech & Payments">
+                <option value="Stripe">Stripe</option>
+                <option value="Ramp">Ramp</option>
+                <option value="Brex">Brex</option>
+                <option value="Coinbase">Coinbase</option>
+                <option value="Affirm">Affirm</option>
+                <option value="Plaid">Plaid</option>
+                <option value="Robinhood">Robinhood</option>
+                <option value="Toast">Toast</option>
+                <option value="Mercury">Mercury</option>
+                <option value="Carta">Carta</option>
+                <option value="Gusto">Gusto</option>
+                <option value="Kraken">Kraken</option>
+                <option value="Checkr">Checkr</option>
+              </optgroup>
+              <!-- DevTools & Productivity -->
+              <optgroup label="🛠️ DevTools & Productivity">
+                <option value="Linear">Linear</option>
+                <option value="Figma">Figma</option>
+                <option value="GitLab">GitLab</option>
+                <option value="Postman">Postman</option>
+                <option value="Asana">Asana</option>
+                <option value="Canva">Canva</option>
+                <option value="Miro">Miro</option>
+                <option value="Zapier">Zapier</option>
+                <option value="PostHog">PostHog</option>
+                <option value="Intercom">Intercom</option>
+                <option value="Resend">Resend</option>
+                <option value="Airtable">Airtable</option>
+                <option value="Braze">Braze</option>
+                <option value="Klaviyo">Klaviyo</option>
+                <option value="Lattice">Lattice</option>
+              </optgroup>
+              <!-- Consumer & Entertainment -->
+              <optgroup label="🎮 Consumer & Entertainment">
+                <option value="Spotify">Spotify</option>
+                <option value="Netflix">Netflix</option>
+                <option value="Reddit">Reddit</option>
+                <option value="Discord">Discord</option>
+                <option value="Dropbox">Dropbox</option>
+                <option value="Pinterest">Pinterest</option>
+                <option value="Roblox">Roblox</option>
+                <option value="Airbnb">Airbnb</option>
+                <option value="Duolingo">Duolingo</option>
+                <option value="Lyft">Lyft</option>
+                <option value="Twitch">Twitch</option>
+              </optgroup>
+              <!-- Enterprise & Security -->
+              <optgroup label="🏢 Enterprise & Security">
+                <option value="Palantir">Palantir</option>
+                <option value="Okta">Okta</option>
+                <option value="Twilio">Twilio</option>
+                <option value="1Password">1Password</option>
+              </optgroup>
+              <!-- Big Tech (Seed Data) -->
+              <optgroup label="🏛️ Big Tech (Seed Data)">
+                <option value="Google">Google</option>
+                <option value="Amazon">Amazon</option>
+                <option value="Meta">Meta</option>
+                <option value="Microsoft">Microsoft</option>
+                <option value="Apple">Apple</option>
+              </optgroup>
             </select>
           </div>
           <div>
@@ -420,6 +585,166 @@
     </div>
   </div>
 
+  <!-- MODAL: INSTANT ALERTS DIGEST (STAGE 4 DELIVERY) -->
+  <div id="alertsModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-100 max-h-[85vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center space-x-2">
+          <span class="p-1 rounded-lg bg-rose-100 text-rose-600">
+            <i data-lucide="bell-ring" class="w-4 h-4"></i>
+          </span>
+          <h3 class="text-lg font-bold text-slate-900">Instant High-Match Job Alerts</h3>
+        </div>
+        <button onclick="closeAlertsModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <p class="text-xs text-slate-500 mt-2">New job opportunities scoring 75%+ or discovered within the last 24-48 hours. Apply early to maximize interview conversion rates!</p>
+      <div id="alertsListContent" class="mt-4 space-y-2.5">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: COMPANY CATALOG EXPLORER -->
+  <div id="companyCatalogModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-3xl w-full p-6 shadow-2xl border border-slate-100 max-h-[85vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center space-x-2">
+          <span class="p-1 rounded-lg bg-violet-100 text-violet-600">
+            <i data-lucide="layout-grid" class="w-4 h-4"></i>
+          </span>
+          <h3 class="text-lg font-bold text-slate-900">Explore 73+ Verified Employer Career Pages</h3>
+        </div>
+        <button onclick="closeCompanyCatalogModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <p class="text-xs text-slate-500 mt-2 mb-3">Click any company to instantly scrape their official ATS career portal. All links point to authentic job boards — no aggregators.</p>
+
+      <div class="mb-3">
+        <input type="text" id="catalogSearchInput" oninput="filterCatalog()" placeholder="Search companies..." class="w-full px-3.5 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+      </div>
+
+      <div id="catalogContent" class="space-y-4">
+        <!-- AI & Frontier Labs -->
+        <div class="catalog-section" data-category="ai">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-600 mb-2 flex items-center space-x-1"><span>🤖</span><span>AI & Frontier Labs</span></h4>
+          <div class="flex flex-wrap gap-1.5">
+            <button onclick="catalogScrape('openai','ashby')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium transition border border-indigo-200">OpenAI</button>
+            <button onclick="catalogScrape('anthropic','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium transition border border-indigo-200">Anthropic</button>
+            <button onclick="catalogScrape('perplexity','ashby')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium transition border border-indigo-200">Perplexity AI</button>
+            <button onclick="catalogScrape('cursor','ashby')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium transition border border-indigo-200">Cursor</button>
+            <button onclick="catalogScrape('cohere','ashby')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium transition border border-indigo-200">Cohere</button>
+            <button onclick="catalogScrape('character','ashby')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium transition border border-indigo-200">Character.ai</button>
+            <button onclick="catalogScrape('replit','ashby')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium transition border border-indigo-200">Replit</button>
+            <button onclick="catalogScrape('scaleai','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium transition border border-indigo-200">Scale AI</button>
+            <button onclick="catalogScrape('cognition','ashby')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium transition border border-indigo-200">Cognition AI</button>
+            <button onclick="catalogScrape('togetherai','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium transition border border-indigo-200">Together AI</button>
+            <button onclick="catalogScrape('stabilityai','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium transition border border-indigo-200">Stability AI</button>
+            <button onclick="catalogScrape('langchain','ashby')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium transition border border-indigo-200">LangChain</button>
+            <button onclick="catalogScrape('baseten','ashby')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium transition border border-indigo-200">Baseten</button>
+            <button onclick="catalogScrape('modal','ashby')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium transition border border-indigo-200">Modal Labs</button>
+            <button onclick="catalogScrape('pika','ashby')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium transition border border-indigo-200">Pika Labs</button>
+            <button onclick="catalogScrape('runway','ashby')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium transition border border-indigo-200">Runway</button>
+            <button onclick="catalogScrape('cartesia','ashby')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium transition border border-indigo-200">Cartesia AI</button>
+            <button onclick="catalogScrape('vapi','ashby')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium transition border border-indigo-200">Vapi</button>
+          </div>
+        </div>
+
+        <!-- Cloud & Infrastructure -->
+        <div class="catalog-section" data-category="cloud">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-sky-600 mb-2 flex items-center space-x-1"><span>☁️</span><span>Cloud & Infrastructure</span></h4>
+          <div class="flex flex-wrap gap-1.5">
+            <button onclick="catalogScrape('cloudflare','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-medium transition border border-sky-200">Cloudflare</button>
+            <button onclick="catalogScrape('databricks','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-medium transition border border-sky-200">Databricks</button>
+            <button onclick="catalogScrape('datadog','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-medium transition border border-sky-200">Datadog</button>
+            <button onclick="catalogScrape('mongodb','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-medium transition border border-sky-200">MongoDB</button>
+            <button onclick="catalogScrape('vercel','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-medium transition border border-sky-200">Vercel</button>
+            <button onclick="catalogScrape('elastic','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-medium transition border border-sky-200">Elastic</button>
+            <button onclick="catalogScrape('supabase','ashby')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-medium transition border border-sky-200">Supabase</button>
+            <button onclick="catalogScrape('neon','ashby')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-medium transition border border-sky-200">Neon</button>
+            <button onclick="catalogScrape('cockroachlabs','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-medium transition border border-sky-200">CockroachDB</button>
+            <button onclick="catalogScrape('fastly','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-medium transition border border-sky-200">Fastly</button>
+            <button onclick="catalogScrape('netlify','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-medium transition border border-sky-200">Netlify</button>
+            <button onclick="catalogScrape('samsara','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-medium transition border border-sky-200">Samsara</button>
+          </div>
+        </div>
+
+        <!-- Fintech & Payments -->
+        <div class="catalog-section" data-category="fintech">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-600 mb-2 flex items-center space-x-1"><span>💳</span><span>Fintech & Payments</span></h4>
+          <div class="flex flex-wrap gap-1.5">
+            <button onclick="catalogScrape('stripe','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-medium transition border border-emerald-200">Stripe</button>
+            <button onclick="catalogScrape('ramp','ashby')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-medium transition border border-emerald-200">Ramp</button>
+            <button onclick="catalogScrape('brex','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-medium transition border border-emerald-200">Brex</button>
+            <button onclick="catalogScrape('coinbase','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-medium transition border border-emerald-200">Coinbase</button>
+            <button onclick="catalogScrape('affirm','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-medium transition border border-emerald-200">Affirm</button>
+            <button onclick="catalogScrape('plaid','lever')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-medium transition border border-emerald-200">Plaid</button>
+            <button onclick="catalogScrape('robinhood','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-medium transition border border-emerald-200">Robinhood</button>
+            <button onclick="catalogScrape('toast','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-medium transition border border-emerald-200">Toast</button>
+            <button onclick="catalogScrape('mercury','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-medium transition border border-emerald-200">Mercury</button>
+            <button onclick="catalogScrape('carta','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-medium transition border border-emerald-200">Carta</button>
+            <button onclick="catalogScrape('gusto','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-medium transition border border-emerald-200">Gusto</button>
+            <button onclick="catalogScrape('kraken','lever')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-medium transition border border-emerald-200">Kraken</button>
+            <button onclick="catalogScrape('checkr','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-medium transition border border-emerald-200">Checkr</button>
+          </div>
+        </div>
+
+        <!-- DevTools & Productivity -->
+        <div class="catalog-section" data-category="devtools">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-violet-600 mb-2 flex items-center space-x-1"><span>🛠️</span><span>DevTools & Productivity</span></h4>
+          <div class="flex flex-wrap gap-1.5">
+            <button onclick="catalogScrape('linear','ashby')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-medium transition border border-violet-200">Linear</button>
+            <button onclick="catalogScrape('figma','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-medium transition border border-violet-200">Figma</button>
+            <button onclick="catalogScrape('gitlab','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-medium transition border border-violet-200">GitLab</button>
+            <button onclick="catalogScrape('postman','lever')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-medium transition border border-violet-200">Postman</button>
+            <button onclick="catalogScrape('asana','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-medium transition border border-violet-200">Asana</button>
+            <button onclick="catalogScrape('canva','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-medium transition border border-violet-200">Canva</button>
+            <button onclick="catalogScrape('miro','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-medium transition border border-violet-200">Miro</button>
+            <button onclick="catalogScrape('zapier','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-medium transition border border-violet-200">Zapier</button>
+            <button onclick="catalogScrape('posthog','ashby')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-medium transition border border-violet-200">PostHog</button>
+            <button onclick="catalogScrape('intercom','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-medium transition border border-violet-200">Intercom</button>
+            <button onclick="catalogScrape('resend','ashby')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-medium transition border border-violet-200">Resend</button>
+            <button onclick="catalogScrape('airtable','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-medium transition border border-violet-200">Airtable</button>
+            <button onclick="catalogScrape('braze','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-medium transition border border-violet-200">Braze</button>
+            <button onclick="catalogScrape('klaviyo','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-medium transition border border-violet-200">Klaviyo</button>
+            <button onclick="catalogScrape('lattice','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-medium transition border border-violet-200">Lattice</button>
+          </div>
+        </div>
+
+        <!-- Consumer & Entertainment -->
+        <div class="catalog-section" data-category="consumer">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-amber-600 mb-2 flex items-center space-x-1"><span>🎮</span><span>Consumer & Entertainment</span></h4>
+          <div class="flex flex-wrap gap-1.5">
+            <button onclick="catalogScrape('spotify','lever')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-medium transition border border-amber-200">Spotify</button>
+            <button onclick="catalogScrape('netflix','lever')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-medium transition border border-amber-200">Netflix</button>
+            <button onclick="catalogScrape('reddit','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-medium transition border border-amber-200">Reddit</button>
+            <button onclick="catalogScrape('discord','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-medium transition border border-amber-200">Discord</button>
+            <button onclick="catalogScrape('dropbox','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-medium transition border border-amber-200">Dropbox</button>
+            <button onclick="catalogScrape('pinterest','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-medium transition border border-amber-200">Pinterest</button>
+            <button onclick="catalogScrape('roblox','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-medium transition border border-amber-200">Roblox</button>
+            <button onclick="catalogScrape('airbnb','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-medium transition border border-amber-200">Airbnb</button>
+            <button onclick="catalogScrape('duolingo','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-medium transition border border-amber-200">Duolingo</button>
+            <button onclick="catalogScrape('lyft','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-medium transition border border-amber-200">Lyft</button>
+            <button onclick="catalogScrape('twitch','lever')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-medium transition border border-amber-200">Twitch</button>
+          </div>
+        </div>
+
+        <!-- Enterprise & Security -->
+        <div class="catalog-section" data-category="enterprise">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-rose-600 mb-2 flex items-center space-x-1"><span>🏢</span><span>Enterprise & Security</span></h4>
+          <div class="flex flex-wrap gap-1.5">
+            <button onclick="catalogScrape('palantir','lever')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-medium transition border border-rose-200">Palantir</button>
+            <button onclick="catalogScrape('okta','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-medium transition border border-rose-200">Okta</button>
+            <button onclick="catalogScrape('twilio','greenhouse')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-medium transition border border-rose-200">Twilio</button>
+            <button onclick="catalogScrape('1password','lever')" class="catalog-pill px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-medium transition border border-rose-200">1Password</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: RESUME CORRECTIONS -->
   <div id="correctionModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100">
@@ -448,6 +773,50 @@
           <button type="submit" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium">Save Corrections</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- MODAL: EXPERIENCE GATED / INELIGIBLE DIALOG -->
+  <div id="ineligibleModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+      <div class="flex items-start justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center space-x-2 text-rose-600">
+          <span class="p-2 rounded-xl bg-rose-50 text-rose-600">
+            <i data-lucide="shield-alert" class="w-5 h-5"></i>
+          </span>
+          <div>
+            <h3 class="text-base font-bold text-slate-900">Application Gated: Experience Mismatch</h3>
+            <p class="text-[11px] text-slate-500">Candidate Eligibility Guard</p>
+          </div>
+        </div>
+        <button onclick="closeIneligibleModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="space-y-3 text-xs text-slate-600">
+        <p>You cannot apply for <strong id="ineligibleRoleTitle" class="text-slate-900"></strong> at <strong id="ineligibleCompany" class="text-slate-900"></strong> because the employer's minimum required experience exceeds your verified experience:</p>
+        <div class="p-3.5 rounded-xl bg-rose-50/70 border border-rose-200 space-y-2 text-xs text-rose-900">
+          <div class="flex justify-between">
+            <span class="font-medium">Employer Minimum Required:</span>
+            <strong id="ineligibleReqExp" class="text-rose-700"></strong>
+          </div>
+          <div class="flex justify-between">
+            <span class="font-medium">Your Profile / Resume Experience:</span>
+            <strong id="ineligibleCandExp" class="text-slate-700"></strong>
+          </div>
+          <div class="flex justify-between pt-1.5 border-t border-rose-200 font-bold">
+            <span>Experience Gap:</span>
+            <span id="ineligibleGap" class="text-rose-700"></span>
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-500 leading-relaxed">
+          CareerRadar AI protects your profile conversion rate by gating roles where you do not satisfy minimum requirements. Instead, apply to <strong>Best-Suited roles on your AI Radar</strong> where your verified experience meets all employer criteria.
+        </p>
+      </div>
+      <div class="pt-3 border-t border-slate-100 flex items-center justify-end space-x-2">
+        <button onclick="closeIneligibleModal()" class="px-3.5 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-700">Close</button>
+        <button onclick="closeIneligibleModal(); switchTab('radar');" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm">View Eligible Roles in AI Radar</button>
+      </div>
     </div>
   </div>
 
@@ -606,7 +975,11 @@
           ? `<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-violet-100 text-violet-800 border border-violet-200">Admin</span>`
           : `<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">Candidate</span>`;
         zone.innerHTML = `
-          <div class="flex items-center space-x-3">
+          <div class="flex items-center space-x-2 sm:space-x-3">
+            <button onclick="openAlertsModal()" class="relative p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition" title="Instant High-Priority Job Alerts">
+              <i data-lucide="bell" class="w-4 h-4 text-indigo-600"></i>
+              <span id="alertsDot" class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+            </button>
             <div class="hidden sm:flex flex-col text-right">
               <span class="text-xs font-semibold text-slate-900">${currentUser.email}</span>
               ${roleBadge}
@@ -723,130 +1096,243 @@
       lucide.createIcons();
     }
 
-    // --- TAB 1: RECOMMENDATIONS ENGINE ---
+    // --- GLOBAL DIAGNOSIS STATE ---
+    let radarFilterMode = 'eligible';
+    let cachedRecs = [];
+    let cachedCandidateExp = 0.0;
+
+    function setRadarFilter(mode) {
+      radarFilterMode = mode;
+      const elBtn = document.getElementById('radarFilterEligibleBtn');
+      const allBtn = document.getElementById('radarFilterAllBtn');
+      if (elBtn && allBtn) {
+        if (mode === 'eligible') {
+          elBtn.className = 'px-3 py-1 rounded-lg font-bold bg-white text-indigo-600 shadow-sm transition';
+          allBtn.className = 'px-3 py-1 rounded-lg font-medium text-slate-600 hover:text-slate-900 transition';
+        } else {
+          allBtn.className = 'px-3 py-1 rounded-lg font-bold bg-white text-indigo-600 shadow-sm transition';
+          elBtn.className = 'px-3 py-1 rounded-lg font-medium text-slate-600 hover:text-slate-900 transition';
+        }
+      }
+      renderRecommendationsList(cachedRecs);
+    }
+
+    // --- TAB 1: RECOMMENDATIONS ENGINE (AI RADAR) ---
     async function refreshRecommendations() {
       const container = document.getElementById('recommendationsList');
-      container.innerHTML = `<div class="py-12 text-center text-slate-400"><i data-lucide="loader" class="w-8 h-8 animate-spin mx-auto mb-2 text-indigo-600"></i>Analyzing multi-resume alignment and employer jobs...</div>`;
+      container.innerHTML = `<div class="py-12 text-center text-slate-400"><i data-lucide="loader" class="w-8 h-8 animate-spin mx-auto mb-2 text-indigo-600"></i>Diagnosing employer opportunities against your verified skills & experience...</div>`;
       lucide.createIcons();
 
       try {
-        const res = await fetch(`${API_BASE}/recommendations?limit=15&min_score=30`, {
+        const res = await fetch(`${API_BASE}/recommendations?limit=30&min_score=30`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const recs = await res.json();
-        document.getElementById('recCountBadge').innerText = `${recs.length} Recommendations`;
-
-        if (!recs.length) {
-          container.innerHTML = `
-            <div class="bg-white rounded-2xl p-12 text-center border border-slate-200">
-              <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl mx-auto flex items-center justify-center mb-3">
-                <i data-lucide="file-question" class="w-6 h-6"></i>
-              </div>
-              <h3 class="text-base font-bold text-slate-900">No Recommendations Yet</h3>
-              <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">Upload at least one resume and sync employer jobs to generate personalized AI matches.</p>
-              <div class="mt-4 flex justify-center space-x-3">
-                <button onclick="switchTab('resumes')" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold">Upload Resume</button>
-                <button onclick="syncVerifiedEmployerSeeds()" class="px-4 py-2 border border-slate-300 rounded-lg text-xs font-semibold">Sync Sample Jobs</button>
-              </div>
-            </div>
-          `;
-          lucide.createIcons();
-          return;
+        cachedRecs = recs;
+        if (recs.length && recs[0].candidate_experience_years !== undefined) {
+          cachedCandidateExp = recs[0].candidate_experience_years;
         }
 
-        container.innerHTML = recs.map(rec => {
-          const score = Math.round(rec.composite_score);
-          const scoreClass = score >= 75 ? 'badge-score-high' : (score >= 55 ? 'badge-score-med' : 'badge-score-low');
-          const job = rec.job;
+        renderRecommendationsList(recs);
+        return recs;
+      } catch (err) {
+        container.innerHTML = `<div class="p-8 text-center text-rose-600 text-sm">Failed to load recommendations. Please verify backend connection.</div>`;
+        return [];
+      }
+    }
 
-          return `
-            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:border-indigo-300 transition space-y-4">
-              <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                <div>
-                  <div class="flex items-center space-x-2">
-                    <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">${job.company_name}</span>
-                    <span class="text-slate-300">•</span>
-                    <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 capitalize">${job.work_mode}</span>
-                    ${job.is_link_verified ? '<span class="text-[11px] font-medium text-emerald-600 flex items-center"><i data-lucide="check" class="w-3 h-3 mr-0.5"></i>Verified Link</span>' : ''}
-                  </div>
-                  <h3 class="text-lg font-bold text-slate-900 mt-1">${job.title}</h3>
-                  <div class="flex items-center space-x-3 text-xs text-slate-500 mt-1">
-                    <span><i data-lucide="map-pin" class="w-3.5 h-3.5 inline mr-1"></i>${job.location}</span>
-                    ${job.min_salary ? `<span><i data-lucide="dollar-sign" class="w-3.5 h-3.5 inline mr-0.5"></i>$${(job.min_salary/1000).toFixed(0)}k - $${(job.max_salary/1000).toFixed(0)}k</span>` : ''}
-                    <span><i data-lucide="briefcase" class="w-3.5 h-3.5 inline mr-1"></i>${job.min_experience_years}+ yrs exp</span>
-                  </div>
+    function renderRecommendationsList(recs) {
+      const container = document.getElementById('recommendationsList');
+      if (!recs || !recs.length) {
+        document.getElementById('recCountBadge').innerText = '0 Matches';
+        container.innerHTML = `
+          <div class="bg-white rounded-2xl p-12 text-center border border-slate-200">
+            <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl mx-auto flex items-center justify-center mb-3">
+              <i data-lucide="file-question" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-900">No Recommendations Available</h3>
+            <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">Upload at least one resume or scrape new career opportunities to run the AI diagnosis.</p>
+            <div class="mt-4 flex justify-center space-x-3">
+              <button onclick="switchTab('resumes')" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold">Upload Resume</button>
+              <button onclick="syncVerifiedEmployerSeeds()" class="px-4 py-2 border border-slate-300 rounded-lg text-xs font-semibold">Sync Sample Jobs</button>
+            </div>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      const eligibleList = recs.filter(r => r.can_apply !== false);
+      const displayList = (radarFilterMode === 'eligible') ? eligibleList : recs;
+
+      document.getElementById('recCountBadge').innerText = `${displayList.length} Roles (${eligibleList.length} Best-Suited Eligible)`;
+
+      if (!displayList.length) {
+        container.innerHTML = `
+          <div class="bg-white rounded-2xl p-10 text-center border border-slate-200 space-y-3">
+            <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 mx-auto flex items-center justify-center">
+              <i data-lucide="filter" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-900">No Roles Match This Filter</h3>
+            <p class="text-xs text-slate-500 max-w-md mx-auto">Currently, ${recs.length} total roles were diagnosed, but ${recs.length - eligibleList.length} role(s) have minimum required experience exceeding your verified experience. Toggle to "All Diagnosed Roles" to inspect requirements.</p>
+            <button onclick="setRadarFilter('all')" class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-xs font-semibold shadow-sm">View All Diagnosed Roles</button>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      container.innerHTML = displayList.map(rec => {
+        const score = Math.round(rec.composite_score);
+        const scoreClass = score >= 75 ? 'badge-score-high' : (score >= 55 ? 'badge-score-med' : 'badge-score-low');
+        const job = rec.job;
+        const canApply = rec.can_apply !== false;
+        const expReq = rec.required_experience_years || job.min_experience_years || 0;
+        const candExp = rec.candidate_experience_years || cachedCandidateExp || 0;
+        const whatTheyNeed = rec.what_they_need && rec.what_they_need.length ? rec.what_they_need : (job.what_they_need || job.responsibilities || []);
+
+        return `
+          <div class="bg-white rounded-2xl p-6 shadow-sm border ${canApply ? 'border-slate-200 hover:border-indigo-300' : 'border-rose-200/80 bg-rose-50/10'} transition space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+              <div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">${escapeHtml(job.company_name)}</span>
+                  <span class="text-slate-300">•</span>
+                  <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 capitalize">${job.work_mode}</span>
+                  ${canApply ? `
+                    <span class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600"></i>
+                      <span>Qualified to Apply (${candExp} yrs >= ${expReq} yrs)</span>
+                    </span>
+                  ` : `
+                    <span class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                      <i data-lucide="lock" class="w-3.5 h-3.5 text-rose-600"></i>
+                      <span>Cannot Apply: Needs ${expReq}+ yrs (You: ${candExp} yrs)</span>
+                    </span>
+                  `}
+                  ${job.is_link_verified ? '<span class="text-[11px] font-medium text-emerald-600 flex items-center"><i data-lucide="check" class="w-3 h-3 mr-0.5"></i>Verified Link</span>' : ''}
                 </div>
-
-                <div class="flex items-center space-x-3">
-                  <div class="text-right">
-                    <span class="inline-block px-3 py-1 rounded-full text-sm font-extrabold ${scoreClass}">${score}% Match</span>
-                    <div class="text-[10px] text-slate-500 capitalize mt-0.5">${rec.eligibility_status.replace('_', ' ')}</div>
-                  </div>
+                <h3 class="text-lg font-bold text-slate-900 mt-1">${escapeHtml(job.title)}</h3>
+                <div class="flex items-center space-x-3 text-xs text-slate-500 mt-1">
+                  <span><i data-lucide="map-pin" class="w-3.5 h-3.5 inline mr-1"></i>${escapeHtml(job.location)}</span>
+                  ${job.min_salary ? `<span><i data-lucide="dollar-sign" class="w-3.5 h-3.5 inline mr-0.5"></i>$${(job.min_salary/1000).toFixed(0)}k - $${(job.max_salary/1000).toFixed(0)}k</span>` : ''}
+                  <span class="font-bold ${canApply ? 'text-slate-700' : 'text-rose-600'}"><i data-lucide="briefcase" class="w-3.5 h-3.5 inline mr-1"></i>Min ${expReq}+ yrs exp</span>
                 </div>
               </div>
 
-              <!-- Best Resume Match Tag -->
-              ${rec.best_resume_name ? `
-                <div class="px-3.5 py-2 rounded-xl bg-indigo-50/60 border border-indigo-100 flex items-center justify-between text-xs text-indigo-900">
-                  <span class="flex items-center space-x-1.5 font-medium">
-                    <i data-lucide="sparkles" class="w-3.5 h-3.5 text-indigo-600"></i>
-                    <span>Optimal Resume Fit: <strong>${rec.best_resume_name}</strong></span>
-                  </span>
-                  <button onclick="openDeepCompareModal('${rec.job_id}')" class="text-indigo-600 hover:text-indigo-800 font-semibold underline">Deep Compare</button>
+              <div class="flex items-center space-x-3">
+                <div class="text-right">
+                  <span class="inline-block px-3 py-1 rounded-full text-sm font-extrabold ${canApply ? scoreClass : 'bg-slate-100 text-slate-500 border border-slate-200'}">${score}% Match</span>
+                  <div class="text-[10px] text-slate-500 capitalize mt-0.5">${canApply ? rec.eligibility_status.replace('_', ' ') : 'Ineligible (Exp Gated)'}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Best Resume Match Tag -->
+            ${rec.best_resume_name ? `
+              <div class="px-3.5 py-2 rounded-xl bg-indigo-50/70 border border-indigo-100 flex items-center justify-between text-xs text-indigo-900">
+                <span class="flex items-center space-x-1.5 font-medium">
+                  <i data-lucide="sparkles" class="w-3.5 h-3.5 text-indigo-600"></i>
+                  <span>Optimal Portfolio Weapon: <strong>${escapeHtml(rec.best_resume_name)}</strong> (${(rec.best_resume_category || 'General').toUpperCase()})</span>
+                </span>
+                <button onclick="openDeepCompareModal('${rec.job_id}')" class="text-indigo-600 hover:text-indigo-800 font-bold underline">Compare Portfolio</button>
+              </div>
+            ` : ''}
+
+            <!-- What They Need: Structured Checklist Box -->
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2 text-xs">
+              <div class="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-700">
+                <span class="flex items-center space-x-1.5">
+                  <i data-lucide="clipboard-check" class="w-3.5 h-3.5 text-indigo-600"></i>
+                  <span>What They Need & Core Requirements</span>
+                </span>
+                <span class="${canApply ? 'text-emerald-700 font-extrabold' : 'text-rose-700 font-extrabold'}">
+                  ${canApply ? '✓ Experience Requirement Satisfied' : '✕ Experience Gap: ' + (rec.experience_gap_years || (expReq - candExp).toFixed(1)) + ' yrs'}
+                </span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-600 text-xs">
+                <div class="flex items-center space-x-1.5">
+                  <span class="font-semibold text-slate-800">⏱️ Experience Required:</span>
+                  <span class="${canApply ? 'text-slate-700' : 'text-rose-700 font-bold'}">Min ${expReq}+ years (${candExp} yrs on record)</span>
+                </div>
+                <div class="flex items-center space-x-1.5">
+                  <span class="font-semibold text-slate-800">📍 Arrangement:</span>
+                  <span class="capitalize">${job.work_mode} (${job.location})</span>
+                </div>
+              </div>
+              ${whatTheyNeed && whatTheyNeed.length ? `
+                <div class="pt-1.5 border-t border-slate-200/60 space-y-1">
+                  ${whatTheyNeed.slice(0, 3).map(item => `
+                    <div class="text-[11px] text-slate-600 flex items-start space-x-1.5">
+                      <span class="text-indigo-500 font-bold">•</span>
+                      <span>${escapeHtml(item)}</span>
+                    </div>
+                  `).join('')}
                 </div>
               ` : ''}
+            </div>
 
-              <!-- Skills Comparison -->
-              <div class="space-y-2">
+            <!-- Skills Comparison -->
+            <div class="space-y-1.5">
+              <div class="flex flex-wrap gap-1.5 items-center">
+                <span class="text-xs font-semibold text-slate-500 mr-1">Matched Skills:</span>
+                ${rec.matched_skills && rec.matched_skills.length ? rec.matched_skills.map(s => `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-xs font-medium border border-emerald-200">✓ ${escapeHtml(s)}</span>`).join('') : '<span class="text-xs text-slate-400">None matched</span>'}
+              </div>
+              ${rec.missing_skills && rec.missing_skills.length ? `
                 <div class="flex flex-wrap gap-1.5 items-center">
-                  <span class="text-xs font-semibold text-slate-500 mr-1">Matched Skills:</span>
-                  ${rec.matched_skills.map(s => `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-xs font-medium border border-emerald-200">${s}</span>`).join('') || '<span class="text-xs text-slate-400">None</span>'}
+                  <span class="text-xs font-semibold text-slate-500 mr-1">Missing Skills:</span>
+                  ${rec.missing_skills.slice(0, 6).map(s => `<span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-xs font-medium">○ ${escapeHtml(s)}</span>`).join('')}
                 </div>
-                ${rec.missing_skills.length ? `
-                  <div class="flex flex-wrap gap-1.5 items-center">
-                    <span class="text-xs font-semibold text-slate-500 mr-1">Skill Gaps:</span>
-                    ${rec.missing_skills.slice(0, 5).map(s => `<span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-xs font-medium">${s}</span>`).join('')}
-                  </div>
-                ` : ''}
-              </div>
+              ` : ''}
+            </div>
 
-              <!-- AI Explainability Reasons -->
-              <div class="bg-slate-50 rounded-xl p-3 border border-slate-100 space-y-1">
-                <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1 flex items-center">
-                  <i data-lucide="info" class="w-3.5 h-3.5 mr-1 text-indigo-600"></i> Why this fits your profile:
-                </div>
-                ${rec.reasons.map(r => `<div class="text-xs text-slate-700 flex items-start space-x-1.5"><span class="text-indigo-500 font-bold">•</span><span>${r}</span></div>`).join('')}
+            <!-- AI Explainability Reasons -->
+            <div class="bg-slate-50 rounded-xl p-3 border border-slate-100 space-y-1">
+              <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1 flex items-center">
+                <i data-lucide="info" class="w-3.5 h-3.5 mr-1 text-indigo-600"></i> Diagnosis & Fit Rationale:
               </div>
+              ${rec.reasons.map(r => `<div class="text-xs text-slate-700 flex items-start space-x-1.5"><span class="text-indigo-500 font-bold">•</span><span>${escapeHtml(r)}</span></div>`).join('')}
+            </div>
 
-              <!-- Actions -->
-              <div class="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t border-slate-100">
+            <!-- Actions -->
+            <div class="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t border-slate-100">
+              <div class="flex items-center space-x-3">
                 <a href="${job.original_url}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-600 hover:text-indigo-600 font-medium flex items-center space-x-1">
-                  <span>Visit ${job.company_name} Portal</span>
+                  <span>Visit ${escapeHtml(job.company_name)} Portal</span>
                   <i data-lucide="external-link" class="w-3 h-3"></i>
                 </a>
-                <div class="flex items-center space-x-2">
-                  <button onclick="recordFeedback('${rec.id}', 'dismissed')" class="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-xs font-medium text-slate-600">Dismiss</button>
-                  <button onclick="generateApplicationPitch('${job.company_name}', '${job.title}', '${rec.matched_skills.join(', ')}', '${job.min_experience_years || 3}')" class="px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50/60 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold flex items-center space-x-1" title="Generate Tailored Application Pitch">
-                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-                    <span>AI Pitch</span>
-                  </button>
-                  <button onclick="trackApplicationDirect('${job.id}', '${rec.best_resume_id || ''}', 'saved')" class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center space-x-1">
-                    <i data-lucide="bookmark" class="w-3.5 h-3.5"></i>
-                    <span>Save</span>
-                  </button>
+                <button onclick="reportDeadLink('${job.id}')" class="text-[11px] text-slate-400 hover:text-rose-600 flex items-center space-x-0.5 transition" title="Report Expired Requisition">
+                  <i data-lucide="flag" class="w-3 h-3"></i>
+                  <span>Report Expired</span>
+                </button>
+              </div>
+              <div class="flex items-center space-x-2">
+                <button onclick="recordFeedback('${rec.id}', 'dismissed')" class="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-xs font-medium text-slate-600">Dismiss</button>
+                <button onclick="generateApplicationPitch('${escapeJsString(job.company_name)}', '${escapeJsString(job.title)}', '${(rec.matched_skills || []).join(', ')}', '${expReq || 3}')" class="px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50/60 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold flex items-center space-x-1" title="Generate Tailored Application Pitch">
+                  <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                  <span>AI Pitch</span>
+                </button>
+                <button onclick="trackApplicationDirect('${job.id}', '${rec.best_resume_id || ''}', 'saved')" class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center space-x-1">
+                  <i data-lucide="bookmark" class="w-3.5 h-3.5"></i>
+                  <span>Save</span>
+                </button>
+                ${canApply ? `
                   <button onclick="applyAndTrack('${job.original_url}', '${job.id}', '${rec.best_resume_id || ''}')" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center space-x-1.5 shadow-sm" title="Open Career Portal & Track as Applied">
                     <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
                     <span>Apply & Track</span>
                   </button>
-                </div>
+                ` : `
+                  <button onclick="showIneligibleModal('${escapeJsString(job.company_name)}', '${escapeJsString(job.title)}', ${expReq}, ${candExp})" class="px-3.5 py-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 text-xs font-bold flex items-center space-x-1.5 transition" title="Experience requirement not met">
+                    <i data-lucide="lock" class="w-3.5 h-3.5 text-rose-600"></i>
+                    <span>Cannot Apply (${expReq}+ yrs req)</span>
+                  </button>
+                `}
               </div>
             </div>
-          `;
-        }).join('');
-        lucide.createIcons();
-      } catch (err) {
-        container.innerHTML = `<div class="p-8 text-center text-rose-600 text-sm">Failed to load recommendations. Please verify backend connection.</div>`;
-      }
+          </div>
+        `;
+      }).join('');
+      lucide.createIcons();
     }
 
     async function syncVerifiedEmployerSeeds() {
@@ -899,41 +1385,82 @@
           return;
         }
 
-        container.innerHTML = jobs.map(job => `
-          <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hover:border-slate-300 transition space-y-3">
-            <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
-              <div>
+        container.innerHTML = jobs.map(job => {
+          const candExp = cachedCandidateExp || 0;
+          const isExpGated = token && candExp > 0 && job.min_experience_years > 0 && candExp < job.min_experience_years;
+          const whatTheyNeed = job.what_they_need && job.what_they_need.length ? job.what_they_need : (job.responsibilities || []);
+
+          return `
+            <div class="bg-white rounded-2xl p-5 shadow-sm border ${isExpGated ? 'border-rose-200/80 bg-rose-50/10' : 'border-slate-200 hover:border-slate-300'} transition space-y-3">
+              <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                <div>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">${escapeHtml(job.company_name)}</span>
+                    <span class="text-slate-300">•</span>
+                    <span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-700 capitalize">${job.work_mode}</span>
+                    <span class="text-xs font-bold px-2 py-0.5 rounded ${isExpGated ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-slate-100 text-slate-700'}">
+                      ⏱️ Min ${job.min_experience_years || 0}+ yrs exp
+                    </span>
+                    ${token && candExp > 0 ? (isExpGated ? `
+                      <span class="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                        ⛔ Ineligible (${job.min_experience_years} yrs req > ${candExp} yrs yours)
+                      </span>
+                    ` : `
+                      <span class="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        ✅ Qualified
+                      </span>
+                    `) : ''}
+                    ${job.is_link_verified ? '<span class="text-[11px] text-emerald-600 font-medium">Verified Active Link</span>' : '<span class="text-[11px] text-slate-400">Unverified</span>'}
+                  </div>
+                  <h3 class="text-base font-bold text-slate-900 mt-1">${escapeHtml(job.title)}</h3>
+                  <div class="text-xs text-slate-500 mt-0.5 flex items-center space-x-3">
+                    <span>${escapeHtml(job.location)}</span>
+                    ${job.min_salary ? `<span>$${(job.min_salary/1000).toFixed(0)}k - $${(job.max_salary/1000).toFixed(0)}k</span>` : ''}
+                  </div>
+                </div>
                 <div class="flex items-center space-x-2">
-                  <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">${job.company_name}</span>
-                  <span class="text-slate-300">•</span>
-                  <span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-700 capitalize">${job.work_mode}</span>
-                  ${job.is_link_verified ? '<span class="text-[11px] text-emerald-600 font-medium">Verified Active Link</span>' : '<span class="text-[11px] text-slate-400">Unverified</span>'}
-                </div>
-                <h3 class="text-base font-bold text-slate-900 mt-1">${job.title}</h3>
-                <div class="text-xs text-slate-500 mt-0.5 flex items-center space-x-3">
-                  <span>${job.location}</span>
-                  ${job.min_salary ? `<span>$${(job.min_salary/1000).toFixed(0)}k - $${(job.max_salary/1000).toFixed(0)}k</span>` : ''}
-                  <span>Min ${job.min_experience_years} yrs exp</span>
+                  <button onclick="reportDeadLink('${job.id}')" class="px-2 py-1.5 rounded-lg border border-slate-200 hover:bg-rose-50 text-slate-400 hover:text-rose-600 text-xs font-medium transition" title="Report link if expired or dead">
+                    <i data-lucide="flag" class="w-3.5 h-3.5"></i>
+                  </button>
+                  <button onclick="generateApplicationPitch('${escapeJsString(job.company_name)}', '${escapeJsString(job.title)}', '${(job.required_skills || []).join(', ')}', '${job.min_experience_years || 3}')" class="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium flex items-center space-x-1" title="Get Tailored Application Pitch">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5 text-indigo-600"></i>
+                    <span>Pitch</span>
+                  </button>
+                  <button onclick="trackApplicationDirect('${job.id}', null, 'saved')" class="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium">Save</button>
+                  ${isExpGated ? `
+                    <button onclick="showIneligibleModal('${escapeJsString(job.company_name)}', '${escapeJsString(job.title)}', ${job.min_experience_years || 0}, ${candExp})" class="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 text-xs font-bold flex items-center space-x-1" title="Cannot apply: Experience requirement not met">
+                      <i data-lucide="lock" class="w-3 h-3 text-rose-600"></i>
+                      <span>Cannot Apply</span>
+                    </button>
+                  ` : `
+                    <button onclick="applyAndTrack('${job.original_url}', '${job.id}', '')" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center space-x-1 shadow-sm" title="Open Career Portal & Track as Applied">
+                      <i data-lucide="external-link" class="w-3 h-3"></i>
+                      <span>Apply & Track</span>
+                    </button>
+                  `}
                 </div>
               </div>
-              <div class="flex items-center space-x-2">
-                <button onclick="generateApplicationPitch('${job.company_name}', '${job.title}', '${(job.required_skills || []).join(', ')}', '${job.min_experience_years || 3}')" class="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium flex items-center space-x-1" title="Get Tailored Application Pitch">
-                  <i data-lucide="sparkles" class="w-3.5 h-3.5 text-indigo-600"></i>
-                  <span>Pitch</span>
-                </button>
-                <button onclick="trackApplicationDirect('${job.id}', null, 'saved')" class="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium">Save</button>
-                <button onclick="applyAndTrack('${job.original_url}', '${job.id}', '')" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center space-x-1 shadow-sm" title="Open Career Portal & Track as Applied">
-                  <i data-lucide="external-link" class="w-3 h-3"></i>
-                  <span>Apply & Track</span>
-                </button>
+              <p class="text-xs text-slate-600 line-clamp-2">${escapeHtml(job.description)}</p>
+
+              <!-- What They Need preview -->
+              ${whatTheyNeed && whatTheyNeed.length ? `
+                <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-[11px] space-y-1">
+                  <span class="font-bold text-slate-700 uppercase tracking-wider text-[10px] flex items-center space-x-1">
+                    <i data-lucide="check-square" class="w-3 h-3 text-indigo-600"></i>
+                    <span>What They Need & Criteria:</span>
+                  </span>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 text-slate-600">
+                    ${whatTheyNeed.slice(0, 3).map(req => `<div>• ${escapeHtml(req)}</div>`).join('')}
+                  </div>
+                </div>
+              ` : ''}
+
+              <div class="flex flex-wrap gap-1 pt-1">
+                ${(job.required_skills || []).map(s => `<span class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[11px] font-medium">${escapeHtml(s)}</span>`).join('')}
               </div>
             </div>
-            <p class="text-xs text-slate-600 line-clamp-2">${job.description}</p>
-            <div class="flex flex-wrap gap-1 pt-1">
-              ${(job.required_skills || []).map(s => `<span class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[11px] font-medium">${s}</span>`).join('')}
-            </div>
-          </div>
-        `).join('');
+          `;
+        }).join('');
         lucide.createIcons();
       } catch (e) {
         container.innerHTML = `<div class="p-6 text-center text-rose-600 text-sm">Failed to load jobs list.</div>`;
@@ -1236,42 +1763,117 @@
       }
     }
 
-    async function syncAuthenticJobs() {
-      showToast('Scraping direct requisitions from 15+ tech employer portals (Cloudflare, Figma, GitLab, Datadog, Reddit, Discord, etc.)...', 'info');
+    // --- ON-DEMAND URL WEB SCRAPER ---
+    async function executeOnDemandScrape() {
+      const urlInput = document.getElementById('scrapeTargetUrl');
+      const url = urlInput.value.trim();
+      if (!url) {
+        showToast('Please enter a company career page or job URL to scrape.', 'error');
+        return;
+      }
+      const progress = document.getElementById('scrapeProgressZone');
+      const progressText = document.getElementById('scrapeProgressText');
+      const btn = document.getElementById('scrapeBtn');
+      
+      progress.classList.remove('hidden');
+      progressText.innerText = `Crawling and extracting requisitions from: ${url}...`;
+      btn.disabled = true;
+      btn.classList.add('opacity-50');
+
       try {
-        const res = await fetch(`${API_BASE}/jobs/sync-authentic-jobs?limit_per_company=4`, {
+        const res = await fetch(`${API_BASE}/jobs/scrape-url`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({ url: url, limit: 30 })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          showToast(`Scraped ${data.total_scraped} roles (${data.new_jobs_ingested} newly ingested)!`, 'success');
+          progressText.innerText = `Scraped ${data.total_scraped} active roles. Updating jobs directory and candidate fit scores...`;
+          setTimeout(() => progress.classList.add('hidden'), 3000);
+          fetchJobsList();
+          if (data.quick_diagnosis) {
+            showQuickDiagnosisBanner(data.quick_diagnosis.total_diagnosed, data.quick_diagnosis.eligible_roles_count, data.quick_diagnosis.ineligible_roles_count, url);
+          }
+          if (token) {
+            refreshRecommendations().then(recs => {
+              if (recs && recs.length && !data.quick_diagnosis) {
+                const eligible = recs.filter(r => r.can_apply !== false).length;
+                const gated = recs.filter(r => r.can_apply === false).length;
+                showQuickDiagnosisBanner(recs.length, eligible, gated, url);
+              }
+            });
+          }
+        } else {
+          const err = await res.json();
+          showToast(err.detail || 'Could not parse jobs from provided URL', 'error');
+          progress.classList.add('hidden');
+        }
+      } catch (e) {
+        showToast('Network error during web scraping', 'error');
+        progress.classList.add('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50');
+      }
+    }
+
+    async function syncAllSources() {
+      showToast('Launching Universal Scraper: scraping 73+ top tech employer career portals...', 'info');
+      try {
+        const res = await fetch(`${API_BASE}/jobs/sync-all-sources?limit_ats=3`, {
+          method: 'POST'
+        });
+        if (res.ok) {
+          const data = await res.json();
+          showToast(`Universal Scrape complete! Ingested ${data.total_new_jobs_ingested} fresh roles across ${data.total_companies_covered} companies (${data.total_deduplicated} already tracked).`, 'success');
+          fetchJobsList();
+          if (token) {
+            refreshRecommendations().then(recs => {
+              if (recs && recs.length) {
+                const eligible = recs.filter(r => r.can_apply !== false).length;
+                const gated = recs.filter(r => r.can_apply === false).length;
+                showQuickDiagnosisBanner(recs.length, eligible, gated, '73+ Tech Employer Portals');
+              }
+            });
+          }
+        } else {
+          showToast('Universal scraper finished.', 'info');
+          fetchJobsList();
+        }
+      } catch (e) {
+        showToast('Network error during universal scrape', 'error');
+      }
+    }
+
+    async function syncAuthenticJobs() {
+      showToast('Scraping direct requisitions from 73+ tech employer portals (OpenAI, Anthropic, Perplexity, Cursor, Cloudflare, Databricks, Stripe, Figma, Spotify, Scale AI, Vercel...)...', 'info');
+      try {
+        const res = await fetch(`${API_BASE}/jobs/sync-authentic-jobs?limit_per_company=3`, {
           method: 'POST'
         });
         if (res.ok) {
           const data = await res.json();
           showToast(`Ingested ${data.total_new_jobs_ingested} real tech postings (${data.total_deduplicated} already tracked)!`, 'success');
           fetchJobsList();
-          if (token) refreshRecommendations();
+          if (token) {
+            refreshRecommendations().then(recs => {
+              if (recs && recs.length) {
+                const eligible = recs.filter(r => r.can_apply !== false).length;
+                const gated = recs.filter(r => r.can_apply === false).length;
+                showQuickDiagnosisBanner(recs.length, eligible, gated, 'Direct Employer ATS Portals');
+              }
+            });
+          }
         } else {
           showToast('Syncing authentic jobs completed', 'info');
           fetchJobsList();
         }
       } catch (e) {
         showToast('Network error contacting ATS portals', 'error');
-      }
-    }
-
-    async function syncFreeJobAPIs() {
-      showToast('Scraping live jobs from Arbeitnow, Remotive, and Jobicy APIs...', 'info');
-      try {
-        const res = await fetch(`${API_BASE}/jobs/sync-free-apis?limit_per_source=20`, {
-          method: 'POST'
-        });
-        if (res.ok) {
-          const data = await res.json();
-          showToast(`Ingested ${data.total_new_jobs_ingested} fresh jobs! (${data.total_deduplicated} already tracked)`, 'success');
-          fetchJobsList();
-        } else {
-          showToast('Free job APIs sync finished', 'info');
-          fetchJobsList();
-        }
-      } catch (e) {
-        showToast('Network error contacting free job APIs', 'error');
       }
     }
 
@@ -1433,6 +2035,13 @@
     }
 
     async function recordFeedback(recId, type) {
+      let comments = null;
+      if (type === 'dismissed') {
+        const reason = prompt("Optional: Why are you dismissing this role? (e.g. 'Salary too low', 'Wrong tech stack', 'Not remote', 'Not interested in company')", "");
+        if (reason !== null && reason.trim()) {
+          comments = reason.trim();
+        }
+      }
       try {
         await fetch(`${API_BASE}/recommendations/${recId}/feedback`, {
           method: 'POST',
@@ -1440,11 +2049,113 @@
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({ feedback_type: type })
+          body: JSON.stringify({ feedback_type: type, comments: comments })
         });
-        showToast('Feedback recorded', 'info');
+        showToast(type === 'dismissed' ? 'Role dismissed. Recommendation model updated!' : 'Feedback recorded', 'info');
         refreshRecommendations();
-      } catch (e) {}
+      } catch (e) {
+        showToast('Feedback error', 'error');
+      }
+    }
+
+    // --- STAGE 4: ALERTS MODAL & DEAD LINK REPORTING ---
+    async function openAlertsModal() {
+      if (!token) {
+        showToast('Sign in or register to receive tailored instant alerts!', 'info');
+        showAuthView();
+        return;
+      }
+      const modal = document.getElementById('alertsModal');
+      const content = document.getElementById('alertsListContent');
+      const dot = document.getElementById('alertsDot');
+      if (dot) dot.classList.add('hidden');
+
+      content.innerHTML = `<div class="py-6 text-center text-slate-400"><i data-lucide="loader" class="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-600"></i>Scanning high-priority matches (>= 75% fit or fresh within 24h)...</div>`;
+      modal.classList.remove('hidden');
+      lucide.createIcons();
+
+      try {
+        const res = await fetch(`${API_BASE}/recommendations/alerts?threshold=75`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Failed to load alerts');
+        const alerts = await res.json();
+
+        if (!alerts.length) {
+          content.innerHTML = `
+            <div class="p-6 text-center bg-slate-50 rounded-xl border border-slate-200">
+              <i data-lucide="check-circle-2" class="w-8 h-8 text-emerald-500 mx-auto mb-2"></i>
+              <p class="text-sm font-bold text-slate-700">All caught up!</p>
+              <p class="text-xs text-slate-500 mt-1">No pending high-match alert requisitions (>75%) at this moment. You will be alerted immediately as new scrapers run.</p>
+            </div>
+          `;
+          lucide.createIcons();
+          return;
+        }
+
+        content.innerHTML = alerts.map(a => {
+          const job = a.job;
+          const score = Math.round(a.composite_score);
+          return `
+            <div class="p-4 rounded-xl border border-slate-200 bg-white hover:border-indigo-300 transition space-y-2">
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="flex items-center space-x-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">${job.company_name}</span>
+                    <span class="text-slate-300">•</span>
+                    <span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-700 capitalize">${job.work_mode}</span>
+                    ${job.is_link_verified ? '<span class="text-[10px] text-emerald-600 font-semibold">Active</span>' : ''}
+                  </div>
+                  <h4 class="text-sm font-bold text-slate-900 mt-0.5">${job.title}</h4>
+                  <div class="text-[11px] text-slate-500">${job.location} • Min ${job.min_experience_years} yrs exp</div>
+                </div>
+                <span class="px-2.5 py-1 rounded-full text-xs font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200">${score}% Match</span>
+              </div>
+              <div class="flex flex-wrap gap-1">
+                ${(job.required_skills || []).slice(0, 4).map(s => `<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-medium">${s}</span>`).join('')}
+              </div>
+              <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+                <button onclick="reportDeadLink('${job.id}')" class="text-[11px] text-slate-400 hover:text-rose-600">Report Expired</button>
+                <div class="flex items-center space-x-2">
+                  <button onclick="generateApplicationPitch('${job.company_name}', '${job.title}', '${(a.matched_skills || []).join(', ')}', '${job.min_experience_years || 3}')" class="px-2.5 py-1 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium">Pitch</button>
+                  <button onclick="applyAndTrack('${job.original_url}', '${job.id}', '${a.best_resume_id || ''}')" class="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold">Apply & Track</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+        lucide.createIcons();
+      } catch (err) {
+        content.innerHTML = `<div class="p-4 text-center text-rose-600 text-xs">Failed to fetch alerts. Please check connection.</div>`;
+      }
+    }
+
+    function closeAlertsModal() {
+      document.getElementById('alertsModal').classList.add('hidden');
+    }
+
+    async function reportDeadLink(jobId) {
+      if (!confirm('Report this job posting link as expired or inactive? Our verifier will re-check it immediately.')) return;
+      showToast('Verifying link status with host career portal...', 'info');
+      try {
+        const res = await fetch(`${API_BASE}/jobs/${jobId}/report-dead-link`, {
+          method: 'POST'
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (!data.is_active) {
+            showToast('Job confirmed expired (status 404/inactive) and marked inactive.', 'info');
+          } else {
+            showToast('Link re-verified: requisition is still actively open on employer portal.', 'success');
+          }
+          fetchJobsList();
+          if (token) refreshRecommendations();
+        } else {
+          showToast('Could not report link at this time', 'error');
+        }
+      } catch (e) {
+        showToast('Network error reporting link', 'error');
+      }
     }
 
     // --- APPLICATION HELPER & 1-CLICK APPLY ---
@@ -1492,6 +2203,105 @@ ${candidateName}`;
       notice.classList.remove('opacity-0');
       setTimeout(() => notice.classList.add('opacity-0'), 2500);
       showToast('Tailored pitch copied to clipboard!', 'success');
+    }
+
+    // --- COMPANY CATALOG MODAL & QUICK SCRAPE ---
+    function openCompanyCatalogModal() {
+      document.getElementById('companyCatalogModal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+    function closeCompanyCatalogModal() {
+      document.getElementById('companyCatalogModal').classList.add('hidden');
+    }
+
+    function filterCatalog() {
+      const query = document.getElementById('catalogSearchInput').value.toLowerCase();
+      document.querySelectorAll('.catalog-pill').forEach(btn => {
+        const text = btn.textContent.toLowerCase();
+        btn.style.display = text.includes(query) ? '' : 'none';
+      });
+      document.querySelectorAll('.catalog-section').forEach(sec => {
+        const visiblePills = sec.querySelectorAll('.catalog-pill[style=""], .catalog-pill:not([style])');
+        const anyVisible = Array.from(sec.querySelectorAll('.catalog-pill')).some(b => b.style.display !== 'none');
+        sec.style.display = anyVisible ? '' : 'none';
+      });
+    }
+
+    function catalogScrape(slug, platform) {
+      let url;
+      if (platform === 'ashby') url = `https://jobs.ashbyhq.com/${slug}`;
+      else if (platform === 'greenhouse') url = `https://boards.greenhouse.io/${slug}`;
+      else if (platform === 'lever') url = `https://jobs.lever.co/${slug}`;
+      else return;
+
+      closeCompanyCatalogModal();
+      document.getElementById('scrapeTargetUrl').value = url;
+      executeOnDemandScrape();
+    }
+
+    function quickScrape(url) {
+      document.getElementById('scrapeTargetUrl').value = url;
+      executeOnDemandScrape();
+    }
+
+    // --- QUICK DIAGNOSIS & ELIGIBILITY MODAL HELPERS ---
+    function showQuickDiagnosisBanner(total, eligible, gated, sourceName) {
+      const banner = document.getElementById('quickDiagnosisBanner');
+      if (!banner) return;
+      const eligibleBadge = document.getElementById('diagBadgeEligible');
+      const gatedBadge = document.getElementById('diagBadgeGated');
+      const summaryText = document.getElementById('quickDiagnosisSummaryText');
+      
+      if (eligibleBadge) eligibleBadge.innerText = `${eligible || 0} Best-Suited`;
+      if (gatedBadge) gatedBadge.innerText = `${gated || 0} Exp Gated`;
+      if (summaryText) {
+        summaryText.innerText = `Scraped & diagnosed ${total || 0} roles from ${sourceName || 'career portal'}. ${eligible || 0} matches meet your skills & experience, ${gated || 0} gated due to experience requirements.`;
+      }
+      banner.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function dismissDiagnosisBanner() {
+      const banner = document.getElementById('quickDiagnosisBanner');
+      if (banner) banner.classList.add('hidden');
+    }
+
+    function showIneligibleModal(company, title, reqExp, candExp) {
+      const modal = document.getElementById('ineligibleModal');
+      if (!modal) return;
+      document.getElementById('ineligibleRoleTitle').innerText = title || 'Position';
+      document.getElementById('ineligibleCompany').innerText = company || 'Employer';
+      document.getElementById('ineligibleReqExp').innerText = `${reqExp || 0} Years`;
+      document.getElementById('ineligibleCandExp').innerText = `${candExp || 0} Years`;
+      const gap = Math.max(0, (reqExp || 0) - (candExp || 0)).toFixed(1);
+      document.getElementById('ineligibleGap').innerText = `+${gap} Years Required`;
+      modal.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeIneligibleModal() {
+      const modal = document.getElementById('ineligibleModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function escapeJsString(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, '\\n')
+        .replace(/\r/g, '');
     }
   </script>
 </body>

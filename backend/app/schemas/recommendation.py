@@ -9,10 +9,25 @@ class RecommendationResponse(BaseModel):
     id: str
     job_id: str
     job: JobResponse
-    best_resume_id: Optional[str]
+    best_resume_id: Optional[str] = None
     best_resume_name: Optional[str] = None
+    best_resume_category: Optional[str] = None
     composite_score: float
     eligibility_status: str
+    can_apply: bool = True
+    experience_matched: bool = True
+    candidate_experience_years: float = 0.0
+    required_experience_years: float = 0.0
+    experience_gap_years: float = 0.0
+    what_they_need: List[str] = Field(default_factory=list)
+    ineligibility_reason: Optional[str] = None
+    skill_match_score: Optional[float] = 0.0
+    role_trajectory_score: Optional[float] = 0.0
+    experience_fit_score: Optional[float] = 0.0
+    work_mode_fit_score: Optional[float] = 0.0
+    semantic_score: Optional[float] = 0.0
+    lexical_score: Optional[float] = 0.0
+    freshness_boost: Optional[float] = 0.0
     matched_skills: List[str]
     missing_skills: List[str]
     reasons: List[str]
